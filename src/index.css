@@ -1,13 +1,21 @@
 @import 'tailwindcss';
 
 @theme {
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --color-accent-50: #fffbeb;
-  --color-accent-100: #fef3c7;
-  --color-accent-400: #fbbf24;
-  --color-accent-500: #f59e0b;
-  --color-accent-600: #d97706;
-  --color-accent-700: #b45309;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Josefin Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Brand: deep navy primary accent, slate secondary (from lioncoscaffolding.com.au) */
+  --color-brand-50: #eef0f9;
+  --color-brand-100: #dde1f2;
+  --color-brand-200: #bcc4e5;
+  --color-brand-300: #8f9bd0;
+  --color-brand-400: #5f6ebb;
+  --color-brand-500: #3a4a9e;
+  --color-brand-600: #172566;
+  --color-brand-700: #121d52;
+  --color-brand-800: #0e1640;
+  --color-brand-900: #0a0f2c;
+  --color-slate-500: #626e81;
+  --color-ink: #101215;
 }
 
 html,
@@ -16,7 +24,7 @@ body,
   min-height: 100%;
 }
 body {
-  @apply bg-slate-100 text-slate-800 antialiased;
+  @apply bg-[#f4f5f7] text-slate-800 antialiased;
   font-family: var(--font-sans);
 }
 button:not(:disabled),
@@ -27,6 +35,41 @@ input,
 select,
 textarea {
   font: inherit;
+}
+.font-display {
+  font-family: var(--font-display);
+}
+.page-enter {
+  animation: page-enter 0.28s ease-out both;
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.toast-enter {
+  animation: toast-enter 0.25s ease-out both;
+}
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .toast-enter {
+    animation: none;
+  }
 }
 .tabular {
   font-variant-numeric: tabular-nums;
@@ -86,6 +129,8 @@ textarea {
   text-align: left;
 }
 .print-sheet th {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
   background: #eee;
   font-size: 9pt;
   text-transform: uppercase;

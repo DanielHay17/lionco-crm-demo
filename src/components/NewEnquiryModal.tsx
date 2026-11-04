@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { peekNextCode } from '../lib/state'
-import { CLIENT_TYPES, type ClientType } from '../lib/types'
+import { CLIENT_TYPES, SERVICE_TYPES, type ClientType, type ServiceType } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
 import { Button, Field, inputCls, Modal } from './ui'
 
 const blank = {
   client: '',
   clientType: 'Builder' as ClientType,
+  serviceType: 'Residential' as ServiceType,
+  droneSurvey: false,
   contactName: '',
   contactPhone: '',
   contactEmail: '',
@@ -22,7 +24,7 @@ export default function NewEnquiryModal({ open, onClose }: { open: boolean; onCl
   const nav = useNavigate()
   const [f, setF] = useState(blank)
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const set = (k: keyof typeof blank, v: string) => setF((p) => ({ ...p, [k]: v }))
+  const set = (k: keyof typeof blank, v: string | boolean) => setF((p) => ({ ...p, [k]: v }))
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -43,10 +45,10 @@ export default function NewEnquiryModal({ open, onClose }: { open: boolean; onCl
   return (
     <Modal open={open} onClose={onClose} title="New enquiry" width="max-w-2xl">
       <form onSubmit={submit} className="space-y-4">
-        <div className="flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+        <div className="flex items-center justify-between rounded-lg bg-brand-50 px-4 py-3 ring-1 ring-brand-100">
           <div>
             <div className="text-xs font-semibold text-slate-500">Job code (auto-assigned)</div>
-            <div className="font-mono text-lg font-bold text-slate-900">{peekNextCode(state, new Date())}</div>
+            <div className="font-mono text-lg font-bold text-brand-600">{peekNextCode(state, new Date())}</div>
           </div>
           <p className="max-w-[16rem] text-right text-xs text-slate-500">Codes are sequential and can't be typed — so costs never get split by a typo.</p>
         </div>
@@ -61,6 +63,22 @@ export default function NewEnquiryModal({ open, onClose }: { open: boolean; onCl
               ))}
             </select>
           </Field>
+          <Field label="Service type">
+            <select className={inputCls} value={f.serviceType} onChange={(e) => set('serviceType', e.target.value)}>
+              {SERVICE_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
+          </Field>
+          <label className="flex items-center gap-2.5 self-end rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={f.droneSurvey}
+              onChange={(e) => set('droneSurvey', e.target.checked)}
+              className="h-4 w-4 accent-brand-600"
+            />
+            Add drone site survey
+          </label>
           <Field label="Contact name">
             <input className={inputCls} value={f.contactName} onChange={(e) => set('contactName', e.target.value)} />
           </Field>

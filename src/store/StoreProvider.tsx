@@ -76,9 +76,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const next = apply((s) => S.moveJob(s, jobId, stage, nowIso()))
       const generated = !before.checklists[jobId] && !!next.checklists[jobId]
       if (generated) {
-        toast(`${job.code} moved to ${stage} — packing checklist generated`, {
+        toast(`${job.code} approved. Packing checklist generated —`, {
           tone: 'success',
-          action: { label: 'Open checklist', to: `/packing/${jobId}` },
+          action: { label: 'view', to: `/packing/${jobId}` },
         })
       } else if (stage === 'Approved' && !next.checklists[jobId]) {
         toast(`${job.code} approved, but the kit list is empty — add kit items to generate a packing checklist`, {
@@ -155,7 +155,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           <div
             key={t.id}
             role="status"
-            className={`pointer-events-auto rounded-lg border px-4 py-3 text-sm shadow-lg ${
+            className={`toast-enter pointer-events-auto rounded-lg border px-4 py-3 text-sm shadow-lg ${
               t.tone === 'success'
                 ? 'border-emerald-200 bg-white text-slate-800'
                 : t.tone === 'warn'
@@ -172,7 +172,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               <div className="flex-1">
                 {t.text}
                 {t.action && (
-                  <Link to={t.action.to} className="ml-2 font-semibold text-amber-700 underline underline-offset-2">
+                  <Link to={t.action.to} className="ml-2 font-semibold text-brand-600 underline underline-offset-2">
                     {t.action.label}
                   </Link>
                 )}

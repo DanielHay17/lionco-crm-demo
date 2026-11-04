@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import ExpenseModal from '../components/ExpenseModal'
-import { Badge, Button, Card, inputCls, PageHeader } from '../components/ui'
+import ExpenseForm from '../components/ExpenseForm'
+import { Badge, Button, Card, CardHeader, EmptyState, inputCls, PageHeader } from '../components/ui'
 import { fmtDate, money, money2 } from '../lib/format'
 import { EXPENSE_CATEGORIES } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
@@ -10,7 +10,6 @@ export default function Expenses() {
   const { state, deleteExpense } = useStore()
   const [jobId, setJobId] = useState('')
   const [category, setCategory] = useState('')
-  const [open, setOpen] = useState(false)
 
   const jobById = useMemo(() => new Map(state.jobs.map((j) => [j.id, j])), [state.jobs])
   const rows = useMemo(
@@ -27,23 +26,22 @@ export default function Expenses() {
 
   return (
     <div>
-      <PageHeader
-        title="Expenses"
-        subtitle="Job costs: who spent what, where, when and why"
-        actions={
-          <Button variant="primary" onClick={() => setOpen(true)}>
-            ＋ Log expense
-          </Button>
-        }
-      />
+      <PageHeader title="Expenses" subtitle="Job costs: who spent what, where, when and why" />
 
-      <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500 text-xs font-bold text-slate-900">#</span>
-        <div className="text-sm text-amber-950">
+      <div className="mb-4 flex items-start gap-3 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3">
+        <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">#</span>
+        <div className="text-sm text-brand-900">
           <span className="font-bold">Fixed job codes — no more split costs from typos.</span> Every expense is tied to a job code picked from a list, so
           "Brook Street", "Brook St" and "Brook Street 000" can't become three different jobs. Job profit updates the moment an expense is saved.
         </div>
       </div>
+
+      <Card className="mb-5">
+        <CardHeader title="Quick add" sub="Job, who, category and date stay put after saving so you can key in a stack of receipts" />
+        <div className="p-5">
+          <ExpenseForm inline />
+        </div>
+      </Card>
 
       <div className="mb-3 flex flex-wrap items-center gap-3">
         <select className={`${inputCls} max-w-sm`} value={jobId} onChange={(e) => setJobId(e.target.value)} aria-label="Filter by job">
@@ -69,7 +67,7 @@ export default function Expenses() {
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
             {rows.length} expense{rows.length === 1 ? '' : 's'} {jobId || category ? '(filtered)' : ''}
           </div>
-          <div className="tabular text-2xl font-bold text-slate-900" data-testid="expenses-total">
+          <div className="tabular text-2xl font-bold text-ink" data-testid="expenses-total">
             {money2(total)}
           </div>
         </div>
@@ -79,7 +77,7 @@ export default function Expenses() {
         <div className="mb-3 flex flex-wrap gap-2">
           {byCat.map((x) => (
             <span key={x.c} className="rounded-full bg-white px-3 py-1 text-xs text-slate-600 ring-1 ring-slate-200">
-              {x.c} <span className="tabular font-bold text-slate-900">{money(x.v)}</span>
+              {x.c} <span className="tabular font-bold text-ink">{money(x.v)}</span>
             </span>
           ))}
         </div>
@@ -104,11 +102,11 @@ export default function Expenses() {
             {rows.map((e) => {
               const j = jobById.get(e.jobId)
               return (
-                <tr key={e.id} className="align-top hover:bg-amber-50/40">
+                <tr key={e.id} className="align-top hover:bg-slate-50">
                   <td className="whitespace-nowrap px-4 py-2 text-slate-500">{fmtDate(e.date)}</td>
                   <td className="px-3 py-2">
                     {j ? (
-                      <Link to={`/jobs/${j.id}`} className="whitespace-nowrap font-mono text-xs font-bold text-slate-700 hover:text-amber-700">
+                      <Link to={`/jobs/${j.id}`} className="whitespace-nowrap font-mono text-xs font-bold text-slate-700 hover:text-brand-600">
                         {j.code}
                         <div className="font-sans font-normal text-slate-500">{j.siteAddress}</div>
                       </Link>
@@ -123,7 +121,7 @@ export default function Expenses() {
                     <Badge>{e.category}</Badge>
                   </td>
                   <td className="max-w-[14rem] px-3 py-2 text-xs text-slate-500">{e.reason || '—'}</td>
-                  <td className="tabular px-4 py-2 text-right font-semibold text-slate-900">{money2(e.amount)}</td>
+                  <td className="tabular px-4 py-2 text-right font-semibold text-ink">{money2(e.amount)}</td>
                   <td className="pr-3">
                     <button onClick={() => deleteExpense(e.id)} aria-label="Delete expense" title="Delete" className="rounded p-1 text-slate-300 hover:bg-red-50 hover:text-red-600">
                       ✕
@@ -134,8 +132,8 @@ export default function Expenses() {
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-slate-400">
-                  No expenses match these filters.
+                <td colSpan={9}>
+                  <EmptyState title="No expenses match">Try clearing a filter, or add one above.</EmptyState>
                 </td>
               </tr>
             )}
@@ -146,14 +144,13 @@ export default function Expenses() {
                 <td colSpan={7} className="px-4 py-2.5 text-right text-xs font-semibold uppercase text-slate-500">
                   Total
                 </td>
-                <td className="tabular px-4 py-2.5 text-right text-base font-bold text-slate-900">{money2(total)}</td>
+                <td className="tabular px-4 py-2.5 text-right text-base font-bold text-ink">{money2(total)}</td>
                 <td />
               </tr>
             </tfoot>
           )}
         </table>
       </Card>
-      <ExpenseModal open={open} onClose={() => setOpen(false)} presetJobId={jobId || undefined} />
     </div>
   )
 }

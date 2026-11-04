@@ -1,23 +1,24 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import NewEnquiryModal from '../components/NewEnquiryModal'
-import { Button, Card, inputCls, MarginBadge, PageHeader, StageBadge } from '../components/ui'
+import { Button, Card, EmptyState, inputCls, MarginBadge, PageHeader, ServiceBadge, StageBadge } from '../components/ui'
 import { money } from '../lib/format'
 import { isCosted, jobFinancials } from '../lib/state'
-import { STAGES } from '../lib/types'
+import { SERVICE_TYPES, STAGES } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
 
 export default function Jobs() {
   const { state } = useStore()
   const [q, setQ] = useState('')
   const [stage, setStage] = useState('')
+  const [service, setService] = useState('')
   const [open, setOpen] = useState(false)
   const rows = useMemo(
     () =>
       [...state.jobs]
         .sort((a, b) => b.code.localeCompare(a.code))
-        .filter((j) => (!stage || j.stage === stage) && `${j.code} ${j.client} ${j.siteAddress} ${j.suburb}`.toLowerCase().includes(q.toLowerCase())),
-    [state.jobs, q, stage],
+        .filter((j) => (!stage || j.stage === stage) && (!service || j.serviceType === service) && `${j.code} ${j.client} ${j.siteAddress} ${j.suburb}`.toLowerCase().includes(q.toLowerCase())),
+    [state.jobs, q, stage, service],
   )
   return (
     <div>
@@ -38,6 +39,12 @@ export default function Jobs() {
             <option key={s}>{s}</option>
           ))}
         </select>
+        <select className={`${inputCls} max-w-[14rem]`} value={service} onChange={(e) => setService(e.target.value)} aria-label="Filter by service type">
+          <option value="">All services</option>
+          {SERVICE_TYPES.map((t) => (
+            <option key={t}>{t}</option>
+          ))}
+        </select>
       </div>
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
@@ -46,6 +53,7 @@ export default function Jobs() {
               <th className="px-4 py-2.5">Job code</th>
               <th className="px-4 py-2.5">Client</th>
               <th className="px-4 py-2.5">Site</th>
+              <th className="px-4 py-2.5">Service</th>
               <th className="px-4 py-2.5">Stage</th>
               <th className="px-4 py-2.5 text-right">Quote</th>
               <th className="px-4 py-2.5 text-right">Profit</th>
@@ -53,15 +61,18 @@ export default function Jobs() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((j) => (
-              <tr key={j.id} className="hover:bg-amber-50/40">
+              <tr key={j.id} className="hover:bg-slate-50">
                 <td className="px-4 py-2.5">
-                  <Link to={`/jobs/${j.id}`} className="font-mono text-xs font-bold text-slate-700 hover:text-amber-700">
+                  <Link to={`/jobs/${j.id}`} className="font-mono text-xs font-bold text-slate-700 hover:text-brand-600">
                     {j.code}
                   </Link>
                 </td>
-                <td className="px-4 py-2.5 font-medium text-slate-900">{j.client}</td>
+                <td className="px-4 py-2.5 font-medium text-ink">{j.client}</td>
                 <td className="px-4 py-2.5 text-slate-600">
                   {j.siteAddress}, {j.suburb}
+                </td>
+                <td className="px-4 py-2.5">
+                  <ServiceBadge service={j.serviceType} drone={j.droneSurvey} />
                 </td>
                 <td className="px-4 py-2.5">
                   <StageBadge stage={j.stage} />
@@ -72,8 +83,8 @@ export default function Jobs() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
-                  No jobs match.
+                <td colSpan={7}>
+                  <EmptyState title="No jobs match">Try a different search or filter.</EmptyState>
                 </td>
               </tr>
             )}

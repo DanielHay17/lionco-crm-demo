@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import TruckDiagram from '../components/TruckDiagram'
-import { Badge, Button, Card, CardHeader, ConfirmModal } from '../components/ui'
+import { Wordmark } from '../components/Logo'
+import { Badge, Button, Card, CardHeader, ConfirmModal, EmptyState } from '../components/ui'
 import { checklistBalance, checklistProgress } from '../lib/checklist'
 import { fmtDate, kg } from '../lib/format'
 import { lineWeight, MAX_SIDE_PCT } from '../lib/loadBalance'
@@ -19,18 +20,24 @@ export default function PackingChecklist() {
 
   if (!job || !checklist) {
     return (
-      <Card className="p-8 text-center text-slate-600">
-        <p>No packing checklist exists for this job yet.</p>
-        {job && job.kit.length > 0 && (
-          <Button className="mt-3" variant="primary" onClick={() => store.regenerateChecklist(job.id)}>
-            Generate from kit list
-          </Button>
-        )}
-        <div className="mt-3">
-          <Link to="/packing" className="font-semibold text-amber-700">
-            ← All checklists
-          </Link>
-        </div>
+      <Card>
+        <EmptyState
+          title="No packing checklist yet"
+          action={
+            <div className="flex items-center gap-3">
+              {job && job.kit.length > 0 && (
+                <Button variant="primary" onClick={() => store.regenerateChecklist(job.id)}>
+                  Generate from kit list
+                </Button>
+              )}
+              <Link to="/packing" className="font-semibold text-brand-600">
+                ← All checklists
+              </Link>
+            </div>
+          }
+        >
+          Checklists are generated when a job moves to Approved.
+        </EmptyState>
       </Card>
     )
   }
@@ -53,9 +60,9 @@ export default function PackingChecklist() {
         </div>
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Packing checklist · {job.client}</h1>
+            <h1 className="font-display text-[26px] font-bold uppercase leading-tight tracking-[0.05em] text-ink">Packing checklist · {job.client}</h1>
             <p className="mt-0.5 text-sm text-slate-500">
-              <Link to={`/jobs/${job.id}`} className="font-mono font-bold text-slate-700 hover:text-amber-700">
+              <Link to={`/jobs/${job.id}`} className="font-mono font-bold text-slate-700 hover:text-brand-600">
                 {job.code}
               </Link>{' '}
               · {job.siteAddress}, {job.suburb} · generated {fmtDate(checklist.generatedAt)}
@@ -102,7 +109,7 @@ export default function PackingChecklist() {
                         checked={l.ticked}
                         onChange={() => store.toggleLine(job.id, l.id)}
                         aria-label={`Packed: ${l.qty} × ${l.name} (${ZONE_LABEL[l.zone]})`}
-                        className="h-[18px] w-[18px] cursor-pointer accent-amber-500"
+                        className="h-[18px] w-[18px] cursor-pointer accent-[#172566]"
                       />
                     </td>
                     <td className={`px-2 py-1.5 font-medium ${l.ticked ? 'line-through' : 'text-slate-800'}`}>{l.name}</td>
@@ -114,7 +121,7 @@ export default function PackingChecklist() {
                         value={l.zone}
                         onChange={(e) => store.setLineZone(job.id, l.id, e.target.value as Zone)}
                         aria-label={`Zone for ${l.name}`}
-                        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-amber-500 focus:outline-none"
+                        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-medium text-slate-700 focus:border-brand-500 focus:outline-none"
                       >
                         {ZONES.map((z) => (
                           <option key={z} value={z}>
@@ -169,12 +176,12 @@ export default function PackingChecklist() {
 
       {/* ---------------- printable A4 sheet ---------------- */}
       <div className="print-sheet" data-testid="print-sheet">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: '3px solid #000', paddingBottom: 6 }}>
-          <div>
-            <h1>LIONCO SCAFFOLDING</h1>
-            <div style={{ fontSize: '11pt', fontWeight: 700 }}>Truck Packing Checklist</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #101215', paddingBottom: 10 }}>
+          <Wordmark dark height={34} />
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '15pt', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'var(--font-display)' }}>Truck Packing Checklist</div>
+            <div style={{ fontSize: '9.5pt' }}>Printed {fmtDate(today.toISOString())}</div>
           </div>
-          <div style={{ textAlign: 'right', fontSize: '10pt' }}>Printed {fmtDate(today.toISOString())}</div>
         </div>
         <table style={{ margin: '10px 0' }}>
           <tbody>

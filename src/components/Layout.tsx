@@ -24,42 +24,48 @@ export default function Layout() {
 
   return (
     <div className="app-shell flex min-h-screen">
-      <aside className="no-print sticky top-0 flex h-screen w-52 shrink-0 flex-col bg-slate-900 px-3 py-5 text-slate-300">
+      <aside className="no-print sticky top-0 flex h-screen w-[216px] shrink-0 flex-col bg-ink px-3 pb-4 pt-6 text-slate-300">
         <div className="px-2 pb-6">
-          <Wordmark />
+          <Wordmark height={27} />
         </div>
-        <nav className="flex flex-1 flex-col gap-0.5">
+        <nav className="flex flex-1 flex-col gap-1">
           {NAV.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                  isActive ? 'bg-slate-800 text-white shadow-[inset_3px_0_0_#f59e0b]' : 'hover:bg-slate-800/60 hover:text-white'
+                `group flex items-center gap-3 rounded-lg px-3 py-2.5 font-display text-[15px] font-medium tracking-[0.04em] transition-colors ${
+                  isActive ? 'bg-brand-600 text-white shadow-[inset_3px_0_0_#fff]' : 'text-slate-400 hover:bg-white/5 hover:text-white'
                 }`
               }
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="opacity-80">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" className="opacity-90">
                 <path d={n.icon} />
               </svg>
               {n.label}
             </NavLink>
           ))}
         </nav>
-        <div className="mt-4 rounded-lg border border-slate-700/70 bg-slate-800/50 p-3">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-amber-400">Demo build</div>
+        <div className="mb-3 px-3">
+          <p className="font-display text-[11px] font-semibold uppercase leading-snug tracking-[0.1em] text-white/80">Safe. Reliable.</p>
+          <p className="font-display text-[11px] font-semibold uppercase leading-snug tracking-[0.1em] text-white/50">Scaffolding done right.</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.04] p-3">
+          <div className="flex items-center gap-1.5 font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-white/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-white/60" /> Demo build
+          </div>
           <p className="mt-1 text-[11px] leading-snug text-slate-400">Fictional data only. Saved in this browser.</p>
           <button
             onClick={() => setConfirm(true)}
-            className="mt-2.5 w-full rounded-md border border-slate-600 px-2 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+            className="mt-2.5 w-full rounded-md border border-white/20 px-2 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10"
           >
             ↺ Reset demo data
           </button>
         </div>
       </aside>
-      <main className="app-main min-w-0 flex-1 px-6 py-6">
-        <div className="mx-auto max-w-[1280px]">
+      <main className="app-main min-w-0 flex-1 px-7 py-6">
+        <div key={pathname} className="page-enter mx-auto max-w-[1280px]">
           <Outlet />
         </div>
       </main>

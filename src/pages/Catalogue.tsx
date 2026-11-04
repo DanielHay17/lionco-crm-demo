@@ -63,8 +63,8 @@ export default function Catalogue() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((c) => (
-              <tr key={c.id} className="hover:bg-amber-50/40">
-                <td className="px-4 py-2 font-medium text-slate-900">{c.name}</td>
+              <tr key={c.id} className="hover:bg-slate-50">
+                <td className="px-4 py-2 font-medium text-ink">{c.name}</td>
                 <td className="px-3 py-2 text-slate-600">{c.category}</td>
                 <td className="tabular px-3 py-2 text-right font-semibold">{c.unitWeightKg} kg</td>
                 <td className="tabular px-4 py-2 text-right text-slate-500">{usage.get(c.id) ?? 0}</td>

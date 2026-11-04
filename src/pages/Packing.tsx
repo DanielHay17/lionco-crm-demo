@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Badge, Card, PageHeader, StageBadge } from '../components/ui'
+import { Badge, Card, EmptyState, PageHeader, StageBadge } from '../components/ui'
 import { checklistBalance, checklistProgress } from '../lib/checklist'
 import { kg } from '../lib/format'
 import { findJob } from '../lib/state'
@@ -33,10 +33,10 @@ export default function Packing() {
               const p = checklistProgress(c)
               const b = checklistBalance(c)
               return (
-                <tr key={c.jobId} className="hover:bg-amber-50/40">
+                <tr key={c.jobId} className="hover:bg-slate-50">
                   <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs font-bold text-slate-700">{job!.code}</td>
                   <td className="px-3 py-2.5">
-                    <div className="font-medium text-slate-900">{job!.client}</div>
+                    <div className="font-medium text-ink">{job!.client}</div>
                     <div className="text-xs text-slate-500">
                       {job!.siteAddress}, {job!.suburb}
                     </div>
@@ -48,7 +48,7 @@ export default function Packing() {
                   <td className="px-3 py-2.5">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
-                        <div className={`h-full ${p.done === p.total ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${p.total ? (p.done / p.total) * 100 : 0}%` }} />
+                        <div className={`h-full ${p.done === p.total ? 'bg-emerald-500' : 'bg-brand-500'}`} style={{ width: `${p.total ? (p.done / p.total) * 100 : 0}%` }} />
                       </div>
                       <span className="tabular text-xs font-semibold text-slate-600">
                         {p.done}/{p.total}
@@ -67,7 +67,7 @@ export default function Packing() {
                     )}
                   </td>
                   <td className="px-4 py-2.5 text-right">
-                    <Link to={`/packing/${c.jobId}`} className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700">
+                    <Link to={`/packing/${c.jobId}`} className="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700">
                       Open
                     </Link>
                   </td>
@@ -76,8 +76,8 @@ export default function Packing() {
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-slate-400">
-                  No checklists yet. Move a job to <b>Approved</b> on the Pipeline to generate one.
+                <td colSpan={7}>
+                  <EmptyState title="No checklists yet">Move a job to Approved on the Pipeline to generate one.</EmptyState>
                 </td>
               </tr>
             )}
