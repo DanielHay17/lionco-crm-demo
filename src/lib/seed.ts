@@ -15,6 +15,7 @@ import {
   type ClientType,
   type Expense,
   type ExpenseCategory,
+  type ServiceType,
   type Job,
   type KitItem,
   type Person,
@@ -70,6 +71,8 @@ interface JobSeed {
   contact: string
   address: string
   suburb: string
+  service: ServiceType
+  drone?: boolean
   stage: Stage
   quote: number
   age: number // days since the enquiry was created
@@ -79,33 +82,34 @@ interface JobSeed {
 
 // prettier-ignore
 const JOB_SEEDS: JobSeed[] = [
-  { client: 'Harbourline Strata Management', type: 'Strata manager', contact: 'Dana Whitlock', address: '48 Ocean St', suburb: 'Bondi', stage: 'Google review requested', quote: 27600, age: 74, since: 1,
+  { client: 'Harbourline Strata Management', type: 'Strata manager', contact: 'Dana Whitlock', address: '48 Ocean St', suburb: 'Bondi', service: 'Commercial', drone: true, stage: 'Google review requested', quote: 27600, age: 74, since: 1,
     kit: { std30: 12, std20: 10, led24: 26, led18: 8, tra12: 22, base: 22, jack: 22, sole: 22, plank24: 36, toe24: 16, rail24: 14, lad4: 3, bay20: 2, brace: 10, tie: 14, cplRA: 90, cplSW: 40, shade: 6 } },
-  { client: 'Reyes Painting Co', type: 'Painter', contact: 'Marco Reyes', address: '7 Station Lane', suburb: 'Parramatta', stage: 'Paid', quote: 11900, age: 61, since: 2,
+  { client: 'Reyes Painting Co', type: 'Painter', contact: 'Marco Reyes', address: '7 Station Lane', suburb: 'Parramatta', service: 'Residential', stage: 'Paid', quote: 11900, age: 61, since: 2,
     kit: { std20: 8, std10: 6, led24: 12, led18: 6, tra12: 10, base: 14, jack: 14, sole: 14, plank24: 14, toe24: 8, rail24: 6, lad4: 2, brace: 4, cplRA: 40, cplSW: 16 } },
-  { client: 'Hollis Constructions', type: 'Builder', contact: 'Brett Hollis', address: '22 Tennyson Rd', suburb: 'Cronulla', stage: 'Paid', quote: 8200, age: 55, since: 3,
+  { client: 'Hollis Constructions', type: 'Builder', contact: 'Brett Hollis', address: '22 Tennyson Rd', suburb: 'Cronulla', service: 'Residential', stage: 'Paid', quote: 8200, age: 55, since: 3,
     kit: { std20: 6, std10: 4, led18: 8, tra07: 6, base: 10, jack: 10, plank18: 10, toe24: 6, lad4: 1, brace: 3, cplRA: 24, cplSW: 10 } },
-  { client: 'Linh & Peter Nguyen', type: 'Homeowner', contact: 'Linh Nguyen', address: '31 Wattle Ave', suburb: 'Chatswood', stage: 'Invoiced', quote: 18500, age: 48, since: 6,
+  { client: 'Linh & Peter Nguyen', type: 'Homeowner', contact: 'Linh Nguyen', address: '31 Wattle Ave', suburb: 'Chatswood', service: 'Residential', stage: 'Invoiced', quote: 18500, age: 48, since: 6,
     kit: { std30: 8, std20: 8, led24: 14, led12: 6, tra12: 12, base: 16, jack: 16, sole: 16, plank24: 24, toe24: 10, rail24: 10, lad4: 2, bay20: 1, brace: 6, tie: 8, cplRA: 60, cplSW: 24, shade: 3 } },
-  { client: 'Westridge Roofing', type: 'Trade contractor', contact: 'Karen Obi', address: 'Unit 4, 16 Lachlan Close', suburb: 'Penrith', stage: 'Invoiced', quote: 22800, age: 44, since: 9,
+  { client: 'Westridge Roofing', type: 'Trade contractor', contact: 'Karen Obi', address: 'Unit 4, 16 Lachlan Close', suburb: 'Penrith', service: 'Commercial', stage: 'Invoiced', quote: 22800, age: 44, since: 9,
     kit: { std30: 10, std20: 12, led24: 20, tra12: 16, base: 20, jack: 20, sole: 20, plank24: 30, plank18: 8, toe24: 14, rail24: 12, lad4: 2, bay20: 2, brace: 8, tie: 10, cplRA: 80, cplSW: 30, net: 4 } },
-  { client: 'Parkview Strata Services', type: 'Strata manager', contact: 'Tomas Adeyemi', address: '18 Orchard Rd', suburb: 'Chatswood', stage: 'Job in progress', quote: 34500, age: 33, since: 12,
+  { client: 'Parkview Strata Services', type: 'Strata manager', contact: 'Tomas Adeyemi', address: '18 Orchard Rd', suburb: 'Chatswood', service: 'Commercial', drone: true, stage: 'Job in progress', quote: 34500, age: 33, since: 12,
     kit: { std30: 16, std20: 14, std10: 6, led24: 30, led18: 10, led12: 6, tra12: 24, tra07: 8, base: 28, jack: 28, sole: 28, plank24: 44, toe24: 20, rail24: 18, lad4: 4, bay20: 3, brace: 14, tie: 20, cplRA: 120, cplSW: 50, shade: 8, net: 4 } },
-  { client: 'Alder & Finch Builders', type: 'Builder', contact: 'Callum Finch', address: '12 Brook St', suburb: 'Marrickville', stage: 'Job in progress', quote: 19800, age: 29, since: 8,
+  { client: 'Alder & Finch Builders', type: 'Builder', contact: 'Callum Finch', address: '12 Brook St', suburb: 'Marrickville', service: 'Residential', stage: 'Job in progress', quote: 19800, age: 29, since: 8,
     kit: { std30: 8, std20: 10, led24: 16, led18: 6, tra12: 14, base: 18, jack: 18, sole: 18, plank24: 26, toe24: 12, rail24: 10, lad4: 2, bay20: 1, brace: 6, tie: 8, cplRA: 64, cplSW: 24, shade: 4 } },
-  { client: 'Coastal Edge Homes', type: 'Builder', contact: 'Priya Raman', address: '9 Surf Rd', suburb: 'Cronulla', stage: 'Job in progress', quote: 26300, age: 24, since: 5,
+  { client: 'Coastal Edge Homes', type: 'Builder', contact: 'Priya Raman', address: '9 Surf Rd', suburb: 'Cronulla', service: 'Residential', stage: 'Job in progress', quote: 26300, age: 24, since: 5,
     kit: { std30: 12, std20: 12, led24: 24, led18: 8, tra12: 18, base: 24, jack: 24, sole: 24, plank24: 34, toe24: 16, rail24: 14, lad4: 3, bay20: 2, brace: 10, tie: 14, cplRA: 96, cplSW: 36, net: 6 } },
-  { client: 'Bondi Bright Painters', type: 'Painter', contact: 'Ellis Mercer', address: '14 Campbell Pde', suburb: 'Bondi', stage: 'Approved', quote: 15200, age: 19, since: 2,
+  { client: 'Bondi Bright Painters', type: 'Painter', contact: 'Ellis Mercer', address: '14 Campbell Pde', suburb: 'Bondi', service: 'Residential', stage: 'Approved', quote: 15200, age: 19, since: 2,
     kit: { std30: 6, std20: 8, led24: 14, led18: 4, tra12: 10, base: 14, jack: 14, sole: 14, plank24: 20, toe24: 10, rail24: 8, lad4: 2, bay20: 1, brace: 6, cplRA: 48, cplSW: 20, shade: 4 } },
-  { client: 'Hartigan Building Group', type: 'Builder', contact: 'Josh Hartigan', address: '63 Harris St', suburb: 'Parramatta', stage: 'Approved', quote: 29800, age: 21, since: 1,
+  { client: 'Hartigan Building Group', type: 'Builder', contact: 'Josh Hartigan', address: '63 Harris St', suburb: 'Parramatta', service: 'Commercial', stage: 'Approved', quote: 29800, age: 21, since: 1,
     kit: { std30: 14, std20: 12, led24: 26, led12: 8, tra12: 20, tra07: 6, base: 26, jack: 26, sole: 26, plank24: 38, toe24: 18, rail24: 16, lad4: 3, bay20: 2, brace: 12, tie: 16, cplRA: 100, cplSW: 44, net: 6 } },
-  { client: 'Southern Cross Body Corporate', type: 'Strata manager', contact: 'Helen Park', address: '220 Alison Rd', suburb: 'Randwick', stage: 'Quote', quote: 58000, age: 14, since: 4,
+  { client: 'Southern Cross Body Corporate', type: 'Strata manager', contact: 'Helen Park', address: '220 Alison Rd', suburb: 'Randwick', service: 'Commercial', drone: true, stage: 'Quote', quote: 58000, age: 14, since: 4,
     kit: { std30: 24, std20: 20, std10: 8, led24: 40, led18: 14, led12: 8, tra12: 32, tra07: 10, base: 40, jack: 40, sole: 40, plank24: 64, plank18: 12, toe24: 30, rail24: 24, lad4: 5, bay20: 4, brace: 22, tie: 30, cplRA: 180, cplSW: 70, shade: 12, net: 6 } },
-  { client: 'Mia & Dan Tran', type: 'Homeowner', contact: 'Mia Tran', address: '27 Bedford St', suburb: 'Newtown', stage: 'Quote', quote: 6400, age: 9, since: 3,
+  { client: 'Mia & Dan Tran', type: 'Homeowner', contact: 'Mia Tran', address: '27 Bedford St', suburb: 'Newtown', service: 'Residential', stage: 'Quote', quote: 6400, age: 9, since: 3,
     kit: { std20: 4, std10: 4, led18: 6, tra07: 4, base: 8, jack: 8, plank18: 8, toe24: 4, lad4: 1, brace: 2, cplRA: 20, cplSW: 8 } },
-  { client: 'Kovac Renovations', type: 'Builder', contact: 'Ivan Kovac', address: '88 High St', suburb: 'Penrith', stage: 'Enquiry', quote: 12000, age: 4, since: 4,
+  { client: 'Kovac Renovations', type: 'Builder', contact: 'Ivan Kovac', address: '88 High St', suburb: 'Penrith', service: 'Residential', stage: 'Enquiry', quote: 12000, age: 4, since: 4,
     kit: { std20: 8, led24: 10, tra12: 8, base: 12, jack: 12, plank24: 14, toe24: 8, lad4: 2, cplRA: 36 } },
-  { client: 'Sarah McAllister', type: 'Homeowner', contact: 'Sarah McAllister', address: '15 Elouera Rd', suburb: 'Cronulla', stage: 'Enquiry', quote: 3600, age: 1, since: 1, kit: {} },
+  { client: 'Sarah McAllister', type: 'Homeowner', contact: 'Sarah McAllister', address: '15 Elouera Rd', suburb: 'Cronulla', service: 'Expert Advice', stage: 'Enquiry', quote: 3600, age: 1, since: 1, kit: {} },
+  { client: 'Pinnacle Property Group', type: 'Builder', contact: 'Nadia Farouk', address: 'Level 3, 40 Victoria Ave', suburb: 'Chatswood', service: 'Drone Services', stage: 'Enquiry', quote: 2400, age: 2, since: 2, kit: {} },
 ]
 
 type ExpSeed = [job: number, daysAgo: number, supplier: string, who: string, cat: ExpenseCategory, what: string, why: string, amount: number]
@@ -221,6 +225,8 @@ export function buildSeed(now: Date = new Date()): AppState {
       code: formatJobCode(year, i + 1),
       client: s.client,
       clientType: s.type,
+      serviceType: s.service,
+      droneSurvey: !!s.drone || s.service === 'Drone Services',
       contactName: s.contact,
       contactPhone: `04${String(10 + i).padStart(2, '0')} 000 ${String(100 + i * 7).padStart(3, '0')}`,
       contactEmail: `${s.contact.toLowerCase().replace(/[^a-z]+/g, '.')}@example.com`,

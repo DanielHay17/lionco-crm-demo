@@ -27,6 +27,14 @@ describe('app state transitions', () => {
     expect(Object.values(s.checklists).some((c) => checklistBalance(c).status === 'warning')).toBe(true)
   })
 
+  it('seed spreads jobs across service types with drone add-ons', () => {
+    const s = buildSeed(NOW)
+    const types = new Set(s.jobs.map((j) => j.serviceType))
+    expect(types).toContain('Residential')
+    expect(types).toContain('Commercial')
+    expect(s.jobs.filter((j) => j.droneSurvey).length).toBeGreaterThanOrEqual(2)
+  })
+
   it('moving to Approved generates a checklist once and does not clobber ticks', () => {
     let s = buildSeed(NOW)
     const quoteJob = s.jobs.find((j) => j.stage === 'Quote' && j.kit.length)!
@@ -75,12 +83,12 @@ describe('app state transitions', () => {
 
   it('new jobs get sequential fixed codes', () => {
     let s = buildSeed(NOW)
-    const base = { client: 'A', clientType: 'Builder' as const, contactName: '', contactPhone: '', contactEmail: '', siteAddress: '1 X St', suburb: 'Y', quote: 1000 }
+    const base = { client: 'A', clientType: 'Builder' as const, serviceType: 'Residential' as const, droneSurvey: false, contactName: '', contactPhone: '', contactEmail: '', siteAddress: '1 X St', suburb: 'Y', quote: 1000 }
     const a = addJob(s, base, NOW)
     s = a.state
     const b = addJob(s, base, NOW)
-    expect(a.job.code).toBe('LC-2026-015')
-    expect(b.job.code).toBe('LC-2026-016')
+    expect(a.job.code).toBe('LC-2026-016')
+    expect(b.job.code).toBe('LC-2026-017')
     expect(a.job.stage).toBe('Enquiry')
   })
 })

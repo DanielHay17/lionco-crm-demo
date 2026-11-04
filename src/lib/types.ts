@@ -32,6 +32,9 @@ export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]
 export const CLIENT_TYPES = ['Builder', 'Strata manager', 'Homeowner', 'Painter', 'Trade contractor'] as const
 export type ClientType = (typeof CLIENT_TYPES)[number]
 
+export const SERVICE_TYPES = ['Residential', 'Commercial', 'Expert Advice', 'Drone Services'] as const
+export type ServiceType = (typeof SERVICE_TYPES)[number]
+
 export type PersonRole = 'Owner' | 'Subcontractor' | 'Labourer'
 export interface Person {
   id: string
@@ -63,6 +66,8 @@ export interface Job {
   code: string // fixed, auto-generated e.g. LC-2026-014
   client: string
   clientType: ClientType
+  serviceType: ServiceType
+  droneSurvey: boolean // drone site survey / footage add-on
   contactName: string
   contactPhone: string
   contactEmail: string

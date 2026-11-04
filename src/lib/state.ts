@@ -11,6 +11,7 @@ import {
   type ExpenseCategory,
   type Job,
   type KitItem,
+  type ServiceType,
   type Stage,
   type Zone,
 } from './types'
@@ -110,6 +111,8 @@ export function stepJob(s: AppState, jobId: string, dir: 1 | -1, at: string): Ap
 export interface NewJobInput {
   client: string
   clientType: ClientType
+  serviceType: ServiceType
+  droneSurvey: boolean
   contactName: string
   contactPhone: string
   contactEmail: string
@@ -129,6 +132,8 @@ export function addJob(s: AppState, input: NewJobInput, now: Date): { state: App
     code: peekNextCode(s, now),
     client: input.client.trim(),
     clientType: input.clientType,
+    serviceType: input.serviceType,
+    droneSurvey: input.droneSurvey,
     contactName: input.contactName.trim(),
     contactPhone: input.contactPhone.trim(),
     contactEmail: input.contactEmail.trim(),

@@ -1,6 +1,6 @@
 import type { AppState } from './types'
 
-export const STORAGE_KEY = 'lionco-crm-demo:v1'
+export const STORAGE_KEY = 'lionco-crm-demo:v2'
 
 export function loadState(): AppState | null {
   try {
@@ -10,6 +10,7 @@ export function loadState(): AppState | null {
     if (
       s?.version !== 1 ||
       !Array.isArray(s.jobs) ||
+      !s.jobs.every((j) => j.serviceType) ||
       !Array.isArray(s.expenses) ||
       !Array.isArray(s.catalogue) ||
       !Array.isArray(s.people) ||
