@@ -165,7 +165,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={store}>
       {children}
-      <div className="no-print pointer-events-none fixed bottom-5 right-5 z-[60] flex w-96 flex-col gap-2">
+      <div className="no-print pointer-events-none fixed bottom-4 left-4 right-4 z-[60] flex flex-col gap-2 sm:left-auto sm:right-5 sm:w-96">
         {toasts.map((t) => (
           <div
             key={t.id}

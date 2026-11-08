@@ -153,3 +153,17 @@ textarea {
 .print-sheet tr {
   break-inside: avoid;
 }
+
+/* ---------- Printable documents (quote preview, site forms) ---------- */
+@media print {
+  .doc-sheet {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+    border-radius: 0 !important;
+  }
+  .doc-sheet h2 {
+    break-after: avoid;
+  }
+}

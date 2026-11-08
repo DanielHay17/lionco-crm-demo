@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import Crumbs from '../components/Crumbs'
+import DeclineModal from '../components/DeclineModal'
+import Notice from '../components/Notice'
+import { InspectionBadge } from '../components/job/InspectionPanel'
+import QuoteTab from '../components/job/QuoteTab'
+import ReturnTab from '../components/job/ReturnTab'
+import SiteTab from '../components/job/SiteTab'
+import VariationsTab from '../components/job/VariationsTab'
 import ExpenseModal from '../components/ExpenseModal'
 import TruckDiagram from '../components/TruckDiagram'
 import {
@@ -20,18 +28,29 @@ import {
 import { checklistBalance, checklistProgress } from '../lib/checklist'
 import { fmtDate, fmtDateTime, kg, money, money2, pct } from '../lib/format'
 import { marginStatus } from '../lib/profit'
-import { checklistIsStale, findJob, isCosted, jobExpenses, jobFinancials, stageIndex } from '../lib/state'
-import { STAGES } from '../lib/types'
+import { contactOf, findClient } from '../lib/clients'
+import { dateOnly } from '../lib/dates'
+import { kitShortages } from '../lib/inventory'
+import { setJobContacts, updateJobSite } from '../lib/ops'
+import { computeQuote } from '../lib/quote'
+import { activeQuote, checklistIsStale, findJob, jobExpenses, jobFinancials, setJobDate, stageWarnings } from '../lib/state'
+import { isCosted, neighbourStage, stageIndex, STAGE_HINT } from '../lib/stages'
 import { useStore } from '../store/StoreProvider'
 
-type Tab = 'kit' | 'expenses' | 'packing' | 'activity'
+type Tab = 'kit' | 'quote' | 'variations' | 'expenses' | 'packing' | 'return' | 'site' | 'activity'
+const TABS: Tab[] = ['kit', 'quote', 'variations', 'expenses', 'packing', 'return', 'site', 'activity']
 
 export default function JobDetail() {
   const { jobId } = useParams()
   const store = useStore()
   const { state } = store
   const job = findJob(state, jobId)
-  const [tab, setTab] = useState<Tab>('kit')
+  const [params, setParams] = useSearchParams()
+  const qTab = params.get('tab') as Tab | null
+  const tab: Tab = qTab && TABS.includes(qTab) ? qTab : 'kit'
+  const setTab = (t: Tab) => setParams({ tab: t }, { replace: true })
+  const [declineOpen, setDeclineOpen] = useState(false)
+  const [editSite, setEditSite] = useState(false)
   const [quoteDraft, setQuoteDraft] = useState('')
   const [note, setNote] = useState('')
   const [expOpen, setExpOpen] = useState(false)
@@ -64,6 +83,15 @@ export default function JobDetail() {
   const cat = new Map(state.catalogue.map((c) => [c.id, c]))
   const kitKg = job.kit.reduce((s, k) => s + (cat.get(k.itemId)?.unitWeightKg ?? 0) * k.qty, 0)
   const idx = stageIndex(job.stage)
+  const back = neighbourStage(job.stage, -1)
+  const fwd = neighbourStage(job.stage, 1)
+  const client = findClient(state, job.clientId)
+  const buyer = contactOf(client, job.buyerContactId)
+  const siteMgr = contactOf(client, job.siteContactId)
+  const quoteObj = activeQuote(state, job)
+  const quoteTotals = quoteObj ? computeQuote(quoteObj) : undefined
+  const shortages = kitShortages(state, job.kit, job.id)
+  const nextWarn = fwd ? stageWarnings(state, job, fwd) : []
   const person = (id: string) => state.people.find((p) => p.id === id)?.name ?? '—'
   const stale = checklistIsStale(state, job)
   const unusedItems = state.catalogue.filter((c) => !job.kit.some((k) => k.itemId === c.id))
@@ -79,12 +107,7 @@ export default function JobDetail() {
 
   return (
     <div>
-      <div className="no-print mb-3 text-sm text-slate-500">
-        <Link to="/pipeline" className="hover:text-ink">
-          Pipeline
-        </Link>{' '}
-        / <span className="font-mono font-semibold text-slate-700">{job.code}</span>
-      </div>
+      <Crumbs job={job} />
 
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -94,25 +117,40 @@ export default function JobDetail() {
             </span>
             <StageBadge stage={job.stage} />
             <ServiceBadge service={job.serviceType} drone={job.droneSurvey} />
+            <InspectionBadge job={job} />
           </div>
           <h1 className="font-display text-[28px] font-bold uppercase leading-tight tracking-[0.05em] text-ink">{job.client}</h1>
           <p className="mt-0.5 text-sm text-slate-500">
             {job.siteAddress}, {job.suburb} NSW
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button disabled={idx === 0} onClick={() => store.stepJob(job.id, -1)}>
-            ◀ Move back
+        <div className="flex flex-wrap gap-2">
+          <Button disabled={!back} onClick={() => store.stepJob(job.id, -1)}>
+            ◀ {job.stage === 'Declined' ? 'Re-open: Enquiry' : 'Move back'}
           </Button>
-          <Button variant="primary" disabled={idx === STAGES.length - 1} onClick={() => store.stepJob(job.id, 1)}>
-            Move forward{idx < STAGES.length - 1 ? `: ${STAGES[idx + 1]}` : ''} ▶
+          <Button variant="primary" disabled={!fwd} onClick={() => store.stepJob(job.id, 1)}>
+            {job.stage === 'Declined' ? `Re-open: ${fwd}` : `Move forward${fwd ? `: ${fwd}` : ''}`} ▶
           </Button>
+          {stageIndex(job.stage) <= stageIndex('Approved') && job.stage !== 'Declined' && (
+            <Button variant="danger" onClick={() => setDeclineOpen(true)}>Decline</Button>
+          )}
         </div>
       </div>
 
-      <Card className="mb-4 px-3 py-3">
+      <Card className="mb-3 px-3 py-3">
         <StageStepper stage={job.stage} onSelect={(s) => store.moveJob(job.id, s)} />
+        <p className="mt-1 px-1 text-xs text-slate-500">{STAGE_HINT[job.stage]}</p>
       </Card>
+      {(nextWarn.length > 0 || shortages.length > 0) && (
+        <div className="mb-3 space-y-2">
+          {nextWarn.length > 0 && <Notice tone="warn" title={`BEFORE ${fwd?.toUpperCase()}`}>{nextWarn.join('; ')}.</Notice>}
+          {shortages.length > 0 && job.stage !== 'Declined' && stageIndex(job.stage) <= stageIndex('Approved') && (
+            <Notice tone="warn" title="STOCK SHORTAGE">
+              {shortages.map((x) => `${x.name}: need ${x.need}, ${Math.max(0, x.availableToThisJob)} available`).join('; ')}. <Link to="/catalogue" className="font-semibold underline">Kit & Inventory</Link>
+            </Notice>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="min-w-0 space-y-4 lg:col-span-2">
@@ -125,11 +163,13 @@ export default function JobDetail() {
             />
             <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4 sm:divide-y-0">
               <div className="p-5">
-                <div className="text-xs font-semibold text-slate-500">Quote (AUD)</div>
+                <div className="text-xs font-semibold text-slate-500">Quote value (AUD ex GST)</div>
                 <div className="mt-1 flex items-center gap-1">
                   <span className="text-lg font-bold text-slate-400">$</span>
                   <input
                     aria-label="Quote amount"
+                    disabled={!!job.activeQuoteId}
+                    title={job.activeQuoteId ? 'Value is driven by the quote builder' : undefined}
                     type="number"
                     min="0"
                     step="100"
@@ -137,9 +177,10 @@ export default function JobDetail() {
                     onChange={(e) => setQuoteDraft(e.target.value)}
                     onBlur={commitQuote}
                     onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                    className="tabular w-full rounded border border-transparent bg-transparent text-xl font-bold text-ink hover:border-slate-300 focus:border-brand-500 focus:bg-white focus:outline-none"
+                    className="tabular w-full rounded border border-transparent bg-transparent text-xl font-bold text-ink hover:border-slate-300 focus:border-brand-500 focus:bg-white focus:outline-none disabled:hover:border-transparent"
                   />
                 </div>
+                {quoteObj && <div className="mt-0.5 text-[11px] text-slate-500">from <Link to={`/quotes/${quoteObj.id}`} className="font-semibold text-brand-600">{quoteObj.number}</Link>{quoteObj.status === 'approved' ? ' + approved variations' : ''}</div>}
               </div>
               <div className="p-5">
                 <div className="text-xs font-semibold text-slate-500">COGS (expenses)</div>
@@ -169,6 +210,12 @@ export default function JobDetail() {
                 <div className="absolute inset-y-0 w-0.5 bg-ink" style={{ left: `calc(${(f.quote / barMax) * 100}% - 1px)` }} title="Quote value" />
               </div>
               <div className="mt-1 flex justify-end text-[10.5px] text-slate-400">▎ marks quote value</div>
+              {quoteTotals && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Quoted expense estimate <b className="tabular text-slate-700">{money(quoteTotals.cost)}</b> vs logged so far <b className="tabular text-slate-700">{money(f.cogs)}</b>
+                  {f.cogs > quoteTotals.cost ? <span className="font-semibold text-red-600"> — over the quoted estimate</span> : ''}
+                </p>
+              )}
             </div>
           </Card>
 
@@ -178,8 +225,12 @@ export default function JobDetail() {
               onChange={setTab}
               tabs={[
                 { id: 'kit', label: 'Kit', count: job.kit.length },
+                { id: 'quote', label: 'Quote', count: state.quotes.filter((q) => q.jobId === job.id).length },
+                { id: 'variations', label: 'Variations', count: state.variations.filter((v) => v.jobId === job.id).length },
                 { id: 'expenses', label: 'Expenses', count: exps.length },
                 { id: 'packing', label: 'Packing' },
+                { id: 'return', label: 'Return' },
+                { id: 'site', label: 'Site' },
                 { id: 'activity', label: 'Activity', count: job.activity.length },
               ]}
             />
@@ -259,6 +310,11 @@ export default function JobDetail() {
                 )}
               </div>
             )}
+
+            {tab === 'quote' && <QuoteTab job={job} />}
+            {tab === 'variations' && <VariationsTab job={job} />}
+            {tab === 'return' && <ReturnTab job={job} />}
+            {tab === 'site' && <SiteTab job={job} />}
 
             {tab === 'expenses' && (
               <div>
@@ -379,17 +435,51 @@ export default function JobDetail() {
 
         <div className="space-y-4">
           <Card>
-            <CardHeader title="Client & site" />
+            <CardHeader title="Client & site" right={<button className="min-h-[32px] px-1 text-xs font-semibold text-brand-600" onClick={() => setEditSite((v) => !v)}>{editSite ? 'Done' : 'Edit'}</button>} />
             <dl className="space-y-2.5 p-5 text-sm">
-              <Row k="Client" v={job.client} />
+              <Row k="Client" v={job.client} link={client ? `/clients/${client.id}` : undefined} />
               <Row k="Type" v={job.clientType} />
               <Row k="Service" v={job.droneSurvey && job.serviceType !== 'Drone Services' ? `${job.serviceType} + drone survey` : job.serviceType} />
-              <Row k="Contact" v={job.contactName || '—'} />
-              <Row k="Phone" v={job.contactPhone || '—'} />
-              <Row k="Email" v={job.contactEmail || '—'} />
+              <Row k="Buyer" v={buyer ? `${buyer.name}${buyer.phone ? ' · ' + buyer.phone : ''}` : '—'} />
+              <Row k="Site manager" v={siteMgr ? `${siteMgr.name}${siteMgr.phone ? ' · ' + siteMgr.phone : ''}` : '—'} />
               <Row k="Site" v={`${job.siteAddress}, ${job.suburb} NSW`} />
+              <Row k="Demo job no." v={`#${job.seq} (local sim — not Xero)`} />
               <Row k="Created" v={fmtDate(job.createdAt)} />
             </dl>
+            {editSite && client && (
+              <div className="space-y-2 border-t border-slate-100 p-4">
+                <label className="block text-xs font-semibold text-slate-600">
+                  Buyer contact
+                  <select className={inputCls} value={job.buyerContactId ?? ''} onChange={(e) => store.run((s) => setJobContacts(s, job.id, { buyerContactId: e.target.value || undefined, siteContactId: job.siteContactId }), 'Buyer contact updated')}>
+                    <option value="">— none —</option>
+                    {client.contacts.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.role})</option>)}
+                  </select>
+                </label>
+                <label className="block text-xs font-semibold text-slate-600">
+                  Site manager
+                  <select className={inputCls} value={job.siteContactId ?? ''} onChange={(e) => store.run((s) => setJobContacts(s, job.id, { buyerContactId: job.buyerContactId, siteContactId: e.target.value || undefined }), 'Site manager updated')}>
+                    <option value="">— none —</option>
+                    {client.contacts.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.role})</option>)}
+                  </select>
+                </label>
+                <SiteEdit job={job} />
+                <p className="text-[11px] text-slate-500">Add or edit contacts on the <Link to={`/clients/${client.id}`} className="font-semibold text-brand-600">client page</Link>.</p>
+              </div>
+            )}
+          </Card>
+          <Card>
+            <CardHeader title="Operational dates" sub="Stamped as the job moves; booked dates are editable" />
+            <dl className="space-y-2 p-5 text-sm">
+              <DateRow k="Approved" v={job.dates.approvedAt} />
+              <DateRow k="Build booked for" v={job.dates.buildDate} edit={(d) => store.run((s) => setJobDate(s, job.id, 'buildDate', d), 'Build date saved')} />
+              <DateRow k="Erected (up in air)" v={job.dates.erectedAt} />
+              <DateRow k="Takedown booked for" v={job.dates.takedownDate} edit={(d) => store.run((s) => setJobDate(s, job.id, 'takedownDate', d), 'Takedown date saved')} />
+              <DateRow k="Dismantled" v={job.dates.dismantledAt} />
+              <DateRow k="Returned & unpacked" v={job.dates.returnedAt} />
+              <DateRow k="Invoiced" v={job.dates.invoicedAt} />
+              <DateRow k="Paid" v={job.paidAt ? dateOnly(job.paidAt) : undefined} />
+            </dl>
+            <p className="border-t border-slate-100 px-5 py-2 text-[11px] text-slate-500">No calendar or scheduling service is connected — these are just dates stored in this demo.</p>
           </Card>
           <Card>
             <CardHeader title="Quick actions" />
@@ -407,6 +497,7 @@ export default function JobDetail() {
         </div>
       </div>
 
+      <DeclineModal jobId={declineOpen ? job.id : null} onClose={() => setDeclineOpen(false)} />
       <ExpenseModal open={expOpen} onClose={() => setExpOpen(false)} presetJobId={job.id} />
       <ConfirmModal
         open={confirmRegen}
@@ -420,11 +511,40 @@ export default function JobDetail() {
   )
 }
 
-function Row({ k, v }: { k: string; v: string }) {
+function Row({ k, v, link }: { k: string; v: string; link?: string }) {
   return (
     <div className="flex justify-between gap-3">
       <dt className="shrink-0 text-slate-500">{k}</dt>
-      <dd className="break-words text-right font-medium text-slate-800">{v}</dd>
+      <dd className="break-words text-right font-medium text-slate-800">{link ? <Link to={link} className="text-brand-600 hover:underline">{v}</Link> : v}</dd>
+    </div>
+  )
+}
+
+function DateRow({ k, v, edit }: { k: string; v?: string; edit?: (d: string) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-slate-500">{k}</dt>
+      <dd className="font-medium text-slate-800">
+        {edit ? (
+          <input type="date" aria-label={k} value={v ?? ''} onChange={(e) => e.target.value && edit(e.target.value)} className="min-h-[34px] rounded border border-slate-300 px-2 py-1 text-xs" />
+        ) : v ? (
+          fmtDate(v)
+        ) : (
+          <span className="text-slate-400">—</span>
+        )}
+      </dd>
+    </div>
+  )
+}
+
+function SiteEdit({ job }: { job: { id: string; siteAddress: string; suburb: string } }) {
+  const { run } = useStore()
+  const [addr, setAddr] = useState(job.siteAddress)
+  const [sub, setSub] = useState(job.suburb)
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <label className="block text-xs font-semibold text-slate-600">Address<input className={inputCls} value={addr} onChange={(e) => setAddr(e.target.value)} onBlur={() => run((s) => updateJobSite(s, job.id, { siteAddress: addr }))} /></label>
+      <label className="block text-xs font-semibold text-slate-600">Suburb<input className={inputCls} value={sub} onChange={(e) => setSub(e.target.value)} onBlur={() => run((s) => updateJobSite(s, job.id, { suburb: sub }))} /></label>
     </div>
   )
 }
