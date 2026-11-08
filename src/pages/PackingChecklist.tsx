@@ -82,8 +82,8 @@ export default function PackingChecklist() {
           </div>
         )}
 
-        <div className="grid grid-cols-5 gap-4">
-          <Card className="col-span-3 overflow-hidden">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <Card className="overflow-x-auto lg:col-span-3">
             <CardHeader
               title="Pack list"
               sub={`${progress.done}/${progress.total} lines ticked · ${kg(balance.totalKg)} total`}
@@ -145,7 +145,7 @@ export default function PackingChecklist() {
             </table>
           </Card>
 
-          <div className="col-span-2 space-y-4">
+          <div className="space-y-4 lg:col-span-2">
             <Card>
               <CardHeader
                 title="Truck balance"

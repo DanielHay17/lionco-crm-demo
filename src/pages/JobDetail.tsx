@@ -114,8 +114,8 @@ export default function JobDetail() {
         <StageStepper stage={job.stage} onSelect={(s) => store.moveJob(job.id, s)} />
       </Card>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="col-span-2 space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
           {/* Money */}
           <Card>
             <CardHeader
@@ -123,7 +123,7 @@ export default function JobDetail() {
               sub={isCosted(job.stage) ? 'Profit = quote − expenses logged against this job code' : 'Costs appear once work starts — expenses logged so far are included'}
               right={isCosted(job.stage) ? <MarginBadge f={f} compact /> : undefined}
             />
-            <div className="grid grid-cols-4 divide-x divide-slate-100">
+            <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4 sm:divide-y-0">
               <div className="p-5">
                 <div className="text-xs font-semibold text-slate-500">Quote (AUD)</div>
                 <div className="mt-1 flex items-center gap-1">
@@ -307,7 +307,7 @@ export default function JobDetail() {
             {tab === 'packing' && (
               <div className="p-5">
                 {checklist ? (
-                  <div className="grid grid-cols-2 items-center gap-6">
+                  <div className="grid grid-cols-1 items-center gap-6 sm:grid-cols-2">
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-2">
                         {checklistBalance(checklist).status === 'warning' ? <Badge tone="red">⚠ Unbalanced</Badge> : <Badge tone="green">✓ Balanced</Badge>}

@@ -126,16 +126,16 @@ export default function ExpenseForm({
 
   if (inline) {
     return (
-      <form onSubmit={submit} noValidate className="grid grid-cols-12 gap-x-3 gap-y-3" data-testid="quick-add">
-        <div className="col-span-5">{jobField}</div>
-        <div className="col-span-3">{who}</div>
-        <div className="col-span-4">{category}</div>
-        <div className="col-span-4">{what}</div>
-        <div className="col-span-3">{where}</div>
-        <div className="col-span-2">{amount}</div>
-        <div className="col-span-3">{date}</div>
-        <div className="col-span-9">{why}</div>
-        <div className="col-span-3 flex items-end">
+      <form onSubmit={submit} noValidate className="grid grid-cols-1 gap-x-3 gap-y-3 sm:grid-cols-12" data-testid="quick-add">
+        <div className="sm:col-span-5">{jobField}</div>
+        <div className="sm:col-span-3">{who}</div>
+        <div className="sm:col-span-4">{category}</div>
+        <div className="sm:col-span-4">{what}</div>
+        <div className="sm:col-span-3">{where}</div>
+        <div className="sm:col-span-2">{amount}</div>
+        <div className="sm:col-span-3">{date}</div>
+        <div className="sm:col-span-9">{why}</div>
+        <div className="flex items-end sm:col-span-3">
           <Button type="submit" variant="primary" className="w-full !py-2.5">
             ＋ Add expense
           </Button>

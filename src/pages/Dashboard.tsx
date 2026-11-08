@@ -4,9 +4,13 @@ import { Bar, BarChart, CartesianGrid, Cell, ComposedChart, LabelList, Legend, L
 import { Badge, Button, Card, CardHeader, MarginBadge, Modal, ServiceBadge, StageBadge } from '../components/ui'
 import { LogoMark } from '../components/Logo'
 import { checklistBalance } from '../lib/checklist'
-import { money, pct } from '../lib/format'
+import { money, pct, ymd } from '../lib/format'
+import { isQuotedOpen } from '../lib/clients'
+import { inspectionStatus } from '../lib/inspection'
+import { stockRows } from '../lib/inventory'
 import { computeFinancials } from '../lib/profit'
-import { isCosted, isPaidStage, jobFinancials, monthlyRevenue } from '../lib/state'
+import { jobFinancials, monthlyRevenue } from '../lib/state'
+import { isCosted, isInField, isPaidStage } from '../lib/stages'
 import { STAGES } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
 
@@ -28,10 +32,10 @@ export default function Dashboard() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const months = monthlyRevenue(state, now)
   const thisMonth = months[months.length - 1]
-  const open = state.jobs.filter((j) => !isPaidStage(j.stage))
+  const open = state.jobs.filter((j) => !isPaidStage(j.stage) && j.stage !== 'Declined')
   const openValue = open.reduce((s, j) => s + j.quote, 0)
   const awaiting = state.jobs.filter((j) => j.stage === 'Enquiry' || j.stage === 'Quote')
-  const inProgress = state.jobs.filter((j) => j.stage === 'Job in progress')
+  const inProgress = state.jobs.filter((j) => isInField(j.stage) && j.stage !== 'Approved')
   const approved = state.jobs.filter((j) => j.stage === 'Approved')
 
   const costed = state.jobs.filter((j) => isCosted(j.stage)).map((j) => ({ job: j, f: jobFinancials(state, j) }))
@@ -40,6 +44,13 @@ export default function Dashboard() {
     costed.reduce((s, r) => s + r.f.cogs, 0),
   )
 
+  const todayStr = ymd(now)
+  const inspections = state.jobs.map((j) => ({ j, st: inspectionStatus(j, state.settings.inspectionIntervalDays, todayStr) }))
+  const overdueInsp = inspections.filter((x) => x.st.state === 'overdue')
+  const dueInsp = inspections.filter((x) => x.st.state === 'due-soon')
+  const shortRows = stockRows(state).filter((r) => r.reserved > 0 && r.available <= 0)
+  const quoteWaiting = state.jobs.filter((j) => isQuotedOpen(state, j))
+  const captureOpen = state.captureInbox.filter((c) => c.status === 'pending').length
   const unbalanced = Object.values(state.checklists).filter((c) => checklistBalance(c).status === 'warning')
 
   const byStage = STAGES.map((s) => {
@@ -77,7 +88,7 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="mb-5 flex items-center justify-between rounded-xl bg-ink px-6 py-4 text-white shadow-sm">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-ink px-6 py-4 text-white shadow-sm">
         <div className="flex items-center gap-4">
           <LogoMark size={40} />
           <div>
@@ -92,7 +103,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      <div className="mb-4 grid grid-cols-4 gap-4">
+      <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Kpi
           label="Open pipeline value"
           value={money(openValue)}
@@ -100,9 +111,9 @@ export default function Dashboard() {
           delta={addedThisWeek > 0 ? { text: `+${money(addedThisWeek)} added this week`, tone: 'up' } : undefined}
         />
         <Kpi
-          label="Jobs in progress"
+          label="Jobs in the field"
           value={String(inProgress.length)}
-          sub={`${money(inProgress.reduce((s, j) => s + j.quote, 0))} on site · ${approved.length} approved, queued`}
+          sub={`${money(inProgress.reduce((s, j) => s + j.quote, 0))} booked / on site / returning · ${approved.length} approved, queued`}
           delta={{ text: `${startedRecently} started in last 14 days`, tone: 'neutral' }}
         />
         <Kpi
@@ -121,8 +132,18 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="mb-4 grid grid-cols-5 gap-4">
-        <Card className="col-span-2">
+      <Card className="mb-4">
+        <CardHeader title="Operations attention" sub="Live from the connected workflow" />
+        <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+          <AttentionTile to="/site" tone={overdueInsp.length ? 'red' : dueInsp.length ? 'amber' : 'green'} big={`${overdueInsp.length + dueInsp.length}`} label="Inspections due / overdue" sub={`${overdueInsp.length} overdue · ${dueInsp.length} due within 7 days (demo reminder, ${state.settings.inspectionIntervalDays}-day interval)`} />
+          <AttentionTile to="/catalogue" tone={shortRows.length ? 'amber' : 'green'} big={`${shortRows.length}`} label="Kit at zero availability" sub={shortRows.length ? shortRows.slice(0, 3).map((r) => r.item.name).join(', ') : 'No fully-reserved items'} />
+          <AttentionTile to="/quotes" tone={quoteWaiting.length ? 'amber' : 'green'} big={`${quoteWaiting.length}`} label="Quotes awaiting decision" sub={`${money(quoteWaiting.reduce((a, j) => a + j.quote, 0))} issued, open`} />
+          <AttentionTile to="/integrations" tone={captureOpen ? 'amber' : 'green'} big={`${captureOpen}`} label="Receipts needing a human" sub="Mock capture exceptions (hyperlink-only / failed forward)" />
+        </div>
+      </Card>
+
+      <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <Card className="lg:col-span-2">
           <CardHeader title="Pipeline value by stage" sub="Quoted value of jobs in each stage · AUD" />
           <div className="h-[250px] p-3 pr-5">
             <ResponsiveContainer width="100%" height="100%">
@@ -146,7 +167,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
         </Card>
-        <Card className="col-span-3">
+        <Card className="lg:col-span-3">
           <CardHeader title="Monthly revenue vs target" sub="Last 12 months · AUD · this month = jobs in Paid / Review requested" />
           <div className="h-[250px] p-3 pr-5">
             <ResponsiveContainer width="100%" height="100%">
@@ -168,8 +189,8 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="col-span-3 overflow-hidden">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        <Card className="overflow-x-auto lg:col-span-3">
           <CardHeader title="Job profitability" sub="Jobs in progress or later · sorted by margin, worst first (click a header to re-sort)" />
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500">
@@ -213,9 +234,9 @@ export default function Dashboard() {
 
         <div className="space-y-4">
           <Card className="border-dashed">
-            <CardHeader title="Xero sync" right={<Badge tone="dark">Coming soon</Badge>} />
+            <CardHeader title="Xero sync" right={<Badge tone="amber">Mock only</Badge>} />
             <div className="space-y-3 p-5 text-sm">
-              <p className="text-slate-600">Moving from MYOB to Xero? Invoices and expenses will sync across, tagged by job code, and payments flow back to move jobs to Paid.</p>
+              <p className="text-slate-600">Xero is the planned accounting source of truth. The demo has a <b>mock, disconnected</b> sync queue ({state.syncQueue.filter((x) => x.status === 'queued').length} items queued locally) — nothing is sent anywhere.</p>
               <ul className="space-y-1.5 text-xs text-slate-500">
                 {['Invoices → Xero', 'Expenses → Xero bills (by job code)', 'Payments ← Xero (auto-move to Paid)'].map((t) => (
                   <li key={t} className="flex items-center gap-2">
@@ -224,10 +245,12 @@ export default function Dashboard() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" onClick={() => setXeroOpen(true)}>
-                🔒 Sync with Xero
-              </Button>
-              <p className="text-center text-[11px] text-slate-400">Planned for v2 · not built yet</p>
+              <Link to="/integrations" className="flex min-h-[40px] w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                Open integration centre (mock)
+              </Link>
+              <button onClick={() => setXeroOpen(true)} className="w-full text-center text-[11px] text-slate-400 underline">
+                Why is this not connected?
+              </button>
             </div>
           </Card>
           <Card>
@@ -263,7 +286,7 @@ export default function Dashboard() {
 
       <Card className="mt-4">
         <CardHeader title="Roadmap · v2" sub="Planned next — none of these are built in this demo" right={<Badge>Not built yet</Badge>} />
-        <div className="grid grid-cols-5 divide-x divide-slate-100">
+        <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
           {ROADMAP.map((r) => (
             <div key={r.title} className="p-4">
               <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-base">{r.icon}</div>
@@ -280,8 +303,8 @@ export default function Dashboard() {
       <Modal open={xeroOpen} onClose={() => setXeroOpen(false)} title="Xero integration" width="max-w-md">
         <div className="text-center">
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-2xl">🔌</div>
-          <p className="font-display text-xl font-bold uppercase tracking-[0.08em] text-ink">Coming soon</p>
-          <p className="mt-1 text-sm text-slate-600">Xero integration planned for v2.</p>
+          <p className="font-display text-xl font-bold uppercase tracking-[0.08em] text-ink">Not connected</p>
+          <p className="mt-1 text-sm text-slate-600">A real Xero connection (OAuth, API) is future work. The demo only simulates a queue locally.</p>
           <p className="mt-3 text-xs text-slate-400">This demo makes no network calls and holds no accounting credentials.</p>
           <Button variant="primary" className="mt-5" onClick={() => setXeroOpen(false)}>
             Got it
@@ -315,5 +338,16 @@ function Kpi({ label, value, sub, bar, tone = 'text-ink', delta }: { label: stri
       )}
       <div className="mt-1.5 text-xs text-slate-500">{sub}</div>
     </Card>
+  )
+}
+
+function AttentionTile({ to, tone, big, label, sub }: { to: string; tone: 'red' | 'amber' | 'green'; big: string; label: string; sub: string }) {
+  const c = { red: 'text-red-600', amber: 'text-amber-600', green: 'text-emerald-600' }[tone]
+  return (
+    <Link to={to} className="block p-4 transition-colors hover:bg-slate-50">
+      <div className={`tabular text-2xl font-bold ${c}`}>{big}</div>
+      <div className="text-[13px] font-semibold text-ink">{label}</div>
+      <div className="mt-0.5 text-xs text-slate-500">{sub}</div>
+    </Link>
   )
 }

@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import NewEnquiryModal from '../components/NewEnquiryModal'
 import { Button, Card, EmptyState, inputCls, MarginBadge, PageHeader, ServiceBadge, StageBadge } from '../components/ui'
 import { money } from '../lib/format'
-import { isCosted, jobFinancials } from '../lib/state'
-import { SERVICE_TYPES, STAGES } from '../lib/types'
+import { jobFinancials } from '../lib/state'
+import { isCosted } from '../lib/stages'
+import { ALL_STAGES, SERVICE_TYPES } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
 
 export default function Jobs() {
@@ -35,7 +36,7 @@ export default function Jobs() {
         <input className={`${inputCls} max-w-xs`} placeholder="Search code, client, suburb…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select className={`${inputCls} max-w-[14rem]`} value={stage} onChange={(e) => setStage(e.target.value)}>
           <option value="">All stages</option>
-          {STAGES.map((s) => (
+          {ALL_STAGES.map((s) => (
             <option key={s}>{s}</option>
           ))}
         </select>

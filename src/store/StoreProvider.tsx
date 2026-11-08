@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { clearState, loadState, saveState } from '../lib/storage'
 import { buildSeed } from '../lib/seed'
 import * as S from '../lib/state'
-import { STAGES, type AppState, type Job, type KitItem, type Stage, type Zone } from '../lib/types'
+import { neighbourStage } from '../lib/stages'
+import { type AppState, type Job, type KitItem, type Stage, type Zone } from '../lib/types'
 
 interface ToastMsg {
   id: number
@@ -15,7 +16,9 @@ interface ToastMsg {
 interface Store {
   state: AppState
   toast: (text: string, opts?: { tone?: ToastMsg['tone']; action?: ToastMsg['action'] }) => void
-  moveJob: (jobId: string, stage: Stage) => void
+  /** Apply any pure state transition from lib/state or lib/ops; optionally toast. Returns the new state. */
+  run: (fn: (s: AppState, at: string) => AppState, msg?: string, tone?: ToastMsg['tone']) => AppState
+  moveJob: (jobId: string, stage: Stage, reason?: string) => void
   stepJob: (jobId: string, dir: 1 | -1) => void
   createJob: (input: S.NewJobInput) => Job
   setQuote: (jobId: string, quote: number) => void
@@ -69,11 +72,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const store = useMemo<Store>(() => {
     const nowIso = () => new Date().toISOString()
-    const move = (jobId: string, stage: Stage) => {
+    const move = (jobId: string, stage: Stage, reason?: string) => {
       const before = ref.current
       const job = S.findJob(before, jobId)
       if (!job || job.stage === stage) return
-      const next = apply((s) => S.moveJob(s, jobId, stage, nowIso()))
+      const warnings = S.stageWarnings(before, job, stage)
+      const next = apply((s) => S.moveJob(s, jobId, stage, nowIso(), reason))
+      if (next === before) {
+        toast(`${job.code} can't move from ${job.stage} to ${stage} — re-open it to Enquiry or Quote first`, { tone: 'warn' })
+        return
+      }
+      if (warnings.length) {
+        toast(`${job.code} moved to ${stage}. Heads-up: ${warnings.join('; ')}.`, { tone: 'warn' })
+        return
+      }
       const generated = !before.checklists[jobId] && !!next.checklists[jobId]
       if (generated) {
         toast(`${job.code} approved. Packing checklist generated —`, {
@@ -92,12 +104,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return {
       state,
       toast,
+      run: (fn, msg, tone) => {
+        const next = apply((s) => fn(s, nowIso()))
+        if (msg) toast(msg, { tone: tone ?? 'success' })
+        return next
+      },
       moveJob: move,
       stepJob: (jobId, dir) => {
         const job = S.findJob(ref.current, jobId)
-        if (!job) return
-        const idx = S.stageIndex(job.stage) + dir
-        const target = STAGES[idx]
+        const target = job && neighbourStage(job.stage, dir)
         if (target) move(jobId, target)
       },
       createJob: (input) => {
@@ -108,7 +123,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           created = r.job
           return r.state
         })
-        toast(`Enquiry ${created.code} created`, { tone: 'success', action: { label: 'Open job', to: `/jobs/${created.id}` } })
+        toast(`Enquiry ${created.code} created (demo job number — local simulation)`, { tone: 'success', action: { label: 'Open job', to: `/jobs/${created.id}` } })
         return created
       },
       setQuote: (jobId, quote) => apply((s) => S.setQuote(s, jobId, quote, nowIso())),
