@@ -57,14 +57,20 @@ Two assertions in `state.test.ts` that hard-coded the old seed (7 stages; next c
 ```bash
 npm install
 npm run typecheck     # tsc -b
-npm test              # vitest run  (152 tests)
+npm test              # vitest run  (154 tests)
 npm run build         # tsc -b && vite build
+npm run test:ui       # real-browser smoke (needs a local Chrome/Chromium; SKIPs cleanly if none) — 50 checks
 npm run dev           # manual walkthrough, http://localhost:5173
 ```
 
-Tests: `quote.test.ts` (cost/profit/margin incl. zero revenue and invalid input, deposit, crew formula incl. invalid input), `clients.test.ts` (LTV/average incl. no jobs and excluding draft/declined/enquiry, stock, inspection, map, suburb analytics),
-`lifecycle.test.ts` (full lifecycle walk, declines/revise, variations, numbering, return checklist, invariants), `migrate.test.ts` (v1→v2, idempotence, bad input, localStorage round-trip),
+Tests: `quote.test.ts` (cost/profit/margin incl. zero revenue and invalid input, deposit, per-line rental weeks, crew formula incl. invalid input), `clients.test.ts` (LTV/average incl. no jobs and excluding draft/declined/enquiry, stock, inspection, map, suburb analytics),
+`lifecycle.test.ts` (full lifecycle walk, declines/revise, variations linked to quote, numbering, return checklist, invariants), `migrate.test.ts` (v1→v2, idempotence, bad input, localStorage round-trip),
 `smoke.test.tsx` (every route server-renders against the seed; customer preview never contains cost/profit/margin).
+
+`scripts/ui-smoke.mjs` (`npm run test:ui`, not part of `npm test`) drives headless Chrome against a local Vite dev server via the dev-only `puppeteer-core` package (no browser download, no network/accounts):
+create fictional client → job (buyer + site manager) → kit → quote (hire weeks, per-line weeks, transport line, deposit) → save → issue → approve → packing link → client link → map bubble → Kanban ▶ and real HTML5 drag/drop (incl. Declined reason dialog) →
+customer print preview has no cost/margin/profit text → localStorage persists across reload → 23 routes at a 390px viewport have no horizontal overflow, mobile menu opens, no uncaught page errors.
+Set `CHROME_PATH` if Chrome is not in a standard location. It uses a throwaway headless profile, so it never touches your own demo data.
 
 ## Suggested walkthrough (≈6 min)
 
@@ -76,8 +82,9 @@ Tests: `quote.test.ts` (cost/profit/margin incl. zero revenue and invalid input,
 
 ## Known gaps
 
-* No browser/E2E automated tests (repo has no DOM test library); UI is covered by server-render smoke tests plus pure-logic tests. Drag-and-drop and print layout were not exercised by automated tests.
+* The browser smoke covers the main flow, Kanban and mobile overflow, not every screen's visual polish; the printed (paper/PDF) layout of the quote and site forms was not visually verified (browser print dialog is not automated).
 * Moving a job backwards past Approved reverts its quote status but does not release/undo a generated packing checklist.
 * Kit returned short is a record only; stock is not auto-adjusted. No per-day crew scheduling or calendar.
 * The schematic map positions are hand-set for ~14 Sydney suburbs; other suburbs go to a holding strip.
+* Rental duration can be set per kit line (override) but is a whole-line multiplier; there is no date-based hire calendar. Labour/transport/other lines are flat.
 * GST, multi-user editing, real documents/PDF generation (browser print only), and anything marked Mock/Future are intentionally absent.

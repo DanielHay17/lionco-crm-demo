@@ -39,7 +39,7 @@ export default function QuoteTab({ job }: { job: Job }) {
       {quotes.length === 0 ? (
         <EmptyState title="No quote yet">Add kit to the job, then build a quote with hire period, labour, transport and margin.</EmptyState>
       ) : (
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto"><table className="w-full min-w-[420px] text-sm">
           <thead className="text-left text-[11px] uppercase tracking-wide text-slate-500">
             <tr className="border-b border-slate-100">
               <th className="px-5 py-2">Version</th>
@@ -63,7 +63,7 @@ export default function QuoteTab({ job }: { job: Job }) {
               )
             })}
           </tbody>
-        </table>
+        </table></div>
       )}
     </div>
   )

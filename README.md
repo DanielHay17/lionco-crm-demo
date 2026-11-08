@@ -31,7 +31,8 @@ npm install
 npm run dev          # http://localhost:5173
 npm run build        # typecheck (tsc -b) + production build into dist/
 npm run typecheck
-npm test             # vitest: load-balance, profit, job-code and state tests
+npm test             # vitest: logic, migration, lifecycle and route smoke tests
+npm run test:ui      # optional real-browser smoke (needs local Chrome; see docs/CALL_FEATURES.md)
 npx vite preview     # serve the production build locally
 ```
 

@@ -53,7 +53,7 @@ export function Button({
     <button
       {...rest}
       className={`inline-flex items-center justify-center gap-1.5 rounded-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
-        size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-2 text-sm'
+        size === 'sm' ? 'min-h-[34px] px-2.5 py-1 text-xs' : 'min-h-[40px] px-3.5 py-2 text-sm'
       } ${variants[variant]} ${className}`}
     />
   )
@@ -220,14 +220,14 @@ export function Tabs<T extends string>({
   onChange: (t: T) => void
 }) {
   return (
-    <div role="tablist" className="flex gap-1 border-b border-slate-200 px-3">
+    <div role="tablist" className="scroll-thin flex max-w-full gap-1 overflow-x-auto border-b border-slate-200 px-3">
       {tabs.map((t) => (
         <button
           key={t.id}
           role="tab"
           aria-selected={value === t.id}
           onClick={() => onChange(t.id)}
-          className={`-mb-px flex items-center gap-2 border-b-2 px-3.5 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+          className={`-mb-px flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors ${
             value === t.id ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >

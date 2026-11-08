@@ -5,7 +5,10 @@ import type { Job, KitItem, KitLine, Quote, QuoteLine, QuoteLineKind, Settings }
 const num = (n: unknown, fallback = 0) => (typeof n === 'number' && Number.isFinite(n) ? n : fallback)
 
 /** Rental duration multiplier — kit lines are priced per unit per week; everything else is flat. */
-const mult = (line: QuoteLine, weeks: number) => (line.kind === 'kit' ? Math.max(0, num(weeks)) : 1)
+const mult = (line: QuoteLine, weeks: number) => (line.kind === 'kit' ? Math.max(0, num(line.weeks ?? weeks, num(weeks))) : 1)
+
+/** Rental weeks that apply to a line (its own override, else the quote hire period). */
+export const lineWeeks = (line: QuoteLine, weeks: number) => (line.kind === 'kit' ? Math.max(0, num(line.weeks ?? weeks, num(weeks))) : 1)
 
 export const lineSell = (line: QuoteLine, weeks: number) => round2(Math.max(0, num(line.qty)) * num(line.unitPrice) * mult(line, weeks))
 export const lineCost = (line: QuoteLine, weeks: number) => round2(Math.max(0, num(line.qty)) * Math.max(0, num(line.unitCost)) * mult(line, weeks))

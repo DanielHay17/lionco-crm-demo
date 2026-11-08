@@ -10,7 +10,7 @@ import { Button, Card, CardHeader, EmptyState, inputCls, ServiceBadge } from '..
 import { kitShortages } from '../lib/inventory'
 import { money, money2, pct } from '../lib/format'
 import { marginStatus } from '../lib/profit'
-import { computeQuote, kitLines, labourLine, lineCost, lineSell, newLineId, quoteCrew, quoteKit } from '../lib/quote'
+import { computeQuote, kitLines, labourLine, lineCost, lineSell, lineWeeks, newLineId, quoteCrew, quoteKit } from '../lib/quote'
 import { approveQuote, findJob, findQuote, issueQuote, markDepositReceived, reviseQuote, updateQuote } from '../lib/state'
 import type { Quote, QuoteLine } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
@@ -250,8 +250,18 @@ export default function QuoteBuilder() {
                               <span className="font-medium text-slate-800">{l.description}</span>
                             )}
                           </div>
-                          <div className="mt-0.5 pl-1 text-[10.5px] text-slate-400">
-                            {l.kind === 'kit' ? `per unit per week × ${q.hireWeeks} wk` : l.kind === 'labour' ? 'per person-hour' : 'each'}
+                          <div className="mt-0.5 flex items-center gap-1.5 pl-1 text-[10.5px] text-slate-400">
+                            {l.kind === 'kit' ? (
+                              editable ? (
+                                <>
+                                  per unit per week ×
+                                  <span className="w-14"><NumInput label={`Rental weeks for ${l.description}`} value={lineWeeks(l, q.hireWeeks)} step={1} onCommit={(n) => setLine(l.id, { weeks: n === q.hireWeeks ? undefined : n })} className="!min-h-[28px] !py-0.5 !text-xs" /></span>
+                                  wk{l.weeks !== undefined && <b className="text-brand-600">override</b>}
+                                </>
+                              ) : (
+                                `per unit per week × ${lineWeeks(l, q.hireWeeks)} wk`
+                              )
+                            ) : l.kind === 'labour' ? 'per person-hour' : 'each'}
                           </div>
                         </td>
                         <td className="w-24 px-2 py-1.5">{editable ? <NumInput label={`Quantity for ${l.description}`} value={l.qty} onCommit={(n) => setLine(l.id, { qty: n })} /> : <span className="tabular block text-right">{l.qty}</span>}</td>

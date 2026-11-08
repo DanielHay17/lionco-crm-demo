@@ -195,6 +195,8 @@ export interface QuoteLine {
   qty: number // units (kit), hours (labour), count (transport/other)
   unitPrice: number // sell per unit (per week for kit); may be negative for a discount
   unitCost: number // internal cost per unit (per week for kit)
+  /** Kit lines only: rental weeks for THIS line; absent = the quote's hire period. */
+  weeks?: number
 }
 
 export interface Quote {
@@ -220,6 +222,8 @@ export interface Quote {
 export interface Variation {
   id: string
   jobId: string
+  /** Quote the variation amends (the job's active quote when recorded). */
+  quoteId?: string
   number: string // e.g. VAR-1 within the job
   description: string
   sellDelta: number

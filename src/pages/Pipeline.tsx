@@ -37,7 +37,7 @@ export default function Pipeline() {
             key={t || 'all'}
             onClick={() => setService(t)}
             aria-pressed={service === t}
-            className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition-colors ${
+            className={`min-h-[32px] rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset transition-colors ${
               service === t ? 'bg-brand-600 text-white ring-brand-600' : 'bg-white text-slate-600 ring-slate-300 hover:bg-slate-50'
             }`}
           >

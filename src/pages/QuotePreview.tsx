@@ -4,7 +4,7 @@ import Notice from '../components/Notice'
 import { Button } from '../components/ui'
 import { contactOf, findClient } from '../lib/clients'
 import { fmtDate, money2 } from '../lib/format'
-import { computeQuote, lineSell } from '../lib/quote'
+import { computeQuote, lineSell, lineWeeks } from '../lib/quote'
 import { findJob, findQuote } from '../lib/state'
 import { useStore } from '../store/StoreProvider'
 
@@ -85,7 +85,7 @@ export default function QuotePreview() {
                   <tr key={l.id} className="border-b border-slate-100 align-top">
                     <td className="py-1.5 pr-2">
                       {l.description}
-                      {l.kind === 'kit' && <span className="block text-[11px] text-slate-500">hire × {quote.hireWeeks} week{quote.hireWeeks === 1 ? '' : 's'}</span>}
+                      {l.kind === 'kit' && <span className="block text-[11px] text-slate-500">hire × {lineWeeks(l, quote.hireWeeks)} week{lineWeeks(l, quote.hireWeeks) === 1 ? '' : 's'}</span>}
                     </td>
                     <td className="tabular px-2 text-right">{l.qty}</td>
                     <td className="tabular px-2 text-right">{money2(l.unitPrice)}{l.kind === 'kit' ? '/wk' : l.kind === 'labour' ? '/h' : ''}</td>

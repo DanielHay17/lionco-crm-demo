@@ -140,6 +140,7 @@ describe('lifecycle invariants', () => {
     const v = s.variations.find((x) => x.jobId === job.id && x.status === 'proposed' && x.description === 'Extra lift')!
     expect(findJob(s, job.id)!.quote).toBe(base)
     s = decideVariation(s, v.id, 'approved', AT)
+    expect(v.quoteId).toBe(job.activeQuoteId) // variation is linked to the quote it amends
     expect(findJob(s, job.id)!.quote).toBe(base + 1200)
     expect(findJob(s, job.id)!.kit.find((k) => k.itemId === 'plank24')!.qty).toBe(job.kit.find((k) => k.itemId === 'plank24')!.qty + 4)
     const v2 = addVariation(s, job.id, { description: 'Declined one', sellDelta: 500, costDelta: 0 }, AT)

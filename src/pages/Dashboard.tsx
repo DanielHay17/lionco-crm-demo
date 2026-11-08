@@ -68,7 +68,7 @@ export default function Dashboard() {
     <th className={`px-3 py-2.5 ${right ? 'text-right' : ''}`}>
       <button
         onClick={() => setSort((p) => (p.key === key ? { key, dir: (p.dir * -1) as 1 | -1 } : { key, dir: key === 'code' ? 1 : -1 }))}
-        className={`font-semibold uppercase tracking-wide hover:text-ink ${sort.key === key ? 'text-ink' : ''}`}
+        className={`inline-flex min-h-[32px] items-center font-semibold uppercase tracking-wide hover:text-ink ${sort.key === key ? 'text-ink' : ''}`}
         aria-label={`Sort by ${label}`}
       >
         {label} {sort.key === key ? (sort.dir === 1 ? '▲' : '▼') : ''}
@@ -248,7 +248,7 @@ export default function Dashboard() {
               <Link to="/integrations" className="flex min-h-[40px] w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                 Open integration centre (mock)
               </Link>
-              <button onClick={() => setXeroOpen(true)} className="w-full text-center text-[11px] text-slate-400 underline">
+              <button onClick={() => setXeroOpen(true)} className="min-h-[32px] w-full text-center text-[11px] text-slate-400 underline">
                 Why is this not connected?
               </button>
             </div>

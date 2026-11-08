@@ -22,7 +22,7 @@ export default function Crumbs({ job, current }: { job: Job; current?: string })
         <span key={p.label} className="flex items-center gap-1.5">
           {i > 0 && <span aria-hidden>›</span>}
           {p.to ? (
-            <Link to={p.to} className={`hover:text-brand-600 ${current === p.label ? 'font-semibold text-ink' : ''}`}>
+            <Link to={p.to} className={`inline-flex min-h-[32px] items-center hover:text-brand-600 ${current === p.label ? 'font-semibold text-ink' : ''}`}>
               {p.label}
             </Link>
           ) : (

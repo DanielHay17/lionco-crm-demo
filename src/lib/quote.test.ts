@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { crewSize } from './crew'
-import { computeQuote, labourLine, newLineId, personHours, quoteCrew, quoteKit } from './quote'
+import { computeQuote, labourLine, lineWeeks, newLineId, personHours, quoteCrew, quoteKit } from './quote'
 import { buildSeed } from './seed'
 import type { Quote, QuoteLine } from './types'
 
@@ -79,5 +79,26 @@ describe('crew formula: people = ceil(person-hours / (days × hours per day))', 
     expect(labourLine({ ...quote, crewDays: 0 }, s.catalogue, s.settings)).toBeNull()
     expect(labourLine(quote, s.catalogue, s.settings)!.qty).toBe(c.people * quote.crewDays * quote.hoursPerDay)
     expect(quoteKit(quote).length).toBe(job.kit.length)
+  })
+})
+
+describe('per-line rental duration', () => {
+  it('a kit line can override the quote hire period; other lines ignore it', () => {
+    const t = computeQuote(
+      q([
+        line({ kind: 'kit', qty: 10, unitPrice: 5, unitCost: 1, weeks: 2 }), // 10 × 5 × 2 = 100 / 20
+        line({ kind: 'kit', qty: 10, unitPrice: 5, unitCost: 1 }), // falls back to 4 weeks: 200 / 40
+        line({ kind: 'transport', qty: 1, unitPrice: 50, unitCost: 30, weeks: 9 }), // weeks ignored
+      ]),
+    )
+    expect(t.sell).toBe(350)
+    expect(t.cost).toBe(90)
+    expect(lineWeeks(line({ kind: 'kit', weeks: 3 }), 4)).toBe(3)
+    expect(lineWeeks(line({ kind: 'kit' }), 4)).toBe(4)
+    expect(lineWeeks(line({ kind: 'labour', weeks: 3 }), 4)).toBe(1)
+  })
+  it('invalid override falls back safely', () => {
+    expect(computeQuote(q([line({ kind: 'kit', qty: 1, unitPrice: 10, unitCost: 0, weeks: NaN })])).sell).toBe(40)
+    expect(computeQuote(q([line({ kind: 'kit', qty: 1, unitPrice: 10, unitCost: 0, weeks: -3 })])).sell).toBe(0)
   })
 })

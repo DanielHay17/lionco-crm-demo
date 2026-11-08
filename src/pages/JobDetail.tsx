@@ -241,8 +241,8 @@ export default function JobDetail() {
                   <p className="text-xs text-slate-500">
                     {job.kit.length} items · <b className="text-slate-700">{kg(kitKg)}</b> total
                   </p>
-                  <div className="flex items-center gap-2">
-                    <select className={`${inputCls} !w-64 !py-1.5`} value={addItem} onChange={(e) => setAddItem(e.target.value)} aria-label="Add kit item">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select className={`${inputCls} !w-full sm:!w-64 !py-1.5`} value={addItem} onChange={(e) => setAddItem(e.target.value)} aria-label="Add kit item">
                       <option value="">Add item from catalogue…</option>
                       {unusedItems.map((c) => (
                         <option key={c.id} value={c.id}>
@@ -268,7 +268,7 @@ export default function JobDetail() {
                 {job.kit.length === 0 ? (
                   <EmptyState title="No kit yet">Add items from the catalogue to build the kit list. The packing checklist is generated from it.</EmptyState>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[480px] text-sm">
                     <thead className="text-left text-[11px] uppercase tracking-wide text-slate-500">
                       <tr className="border-b border-slate-100">
                         <th className="px-5 py-2">Item</th>
@@ -306,7 +306,7 @@ export default function JobDetail() {
                         )
                       })}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             )}
@@ -329,7 +329,7 @@ export default function JobDetail() {
                 {exps.length === 0 ? (
                   <EmptyState title="No expenses yet">Costs logged against {job.code} show up here and roll straight into profit.</EmptyState>
                 ) : (
-                  <table className="w-full text-sm">
+                  <div className="overflow-x-auto"><table className="w-full min-w-[480px] text-sm">
                     <thead className="text-left text-[11px] uppercase tracking-wide text-slate-500">
                       <tr className="border-b border-slate-100">
                         <th className="px-5 py-2">Date</th>
@@ -355,7 +355,7 @@ export default function JobDetail() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                  </table></div>
                 )}
               </div>
             )}

@@ -407,8 +407,8 @@ export function buildSeed(now: Date = new Date()): AppState {
 
   // ---- variations (proposed / declined only, so contract values — and the CEO dashboard — are unchanged) ----
   const variations: Variation[] = [
-    { id: 'var-1', jobId: 'job-7', number: 'VAR-1', description: 'Extra lift at the rear (client request)', sellDelta: 2400, costDelta: 1500, kitDeltas: [{ itemId: 'plank24', qty: 6 }, { itemId: 'rail24', qty: 4 }], status: 'proposed', createdAt: hoursAgo(now, 3).toISOString() },
-    { id: 'var-2', jobId: 'job-8', number: 'VAR-1', description: 'Additional netting to north face', sellDelta: 900, costDelta: 650, kitDeltas: [{ itemId: 'net', qty: 3 }], status: 'declined', createdAt: hoursAgo(now, 20).toISOString(), decidedAt: hoursAgo(now, 18).toISOString() },
+    { id: 'var-1', jobId: 'job-7', quoteId: 'q-7', number: 'VAR-1', description: 'Extra lift at the rear (client request)', sellDelta: 2400, costDelta: 1500, kitDeltas: [{ itemId: 'plank24', qty: 6 }, { itemId: 'rail24', qty: 4 }], status: 'proposed', createdAt: hoursAgo(now, 3).toISOString() },
+    { id: 'var-2', jobId: 'job-8', quoteId: 'q-8', number: 'VAR-1', description: 'Additional netting to north face', sellDelta: 900, costDelta: 650, kitDeltas: [{ itemId: 'net', qty: 3 }], status: 'declined', createdAt: hoursAgo(now, 20).toISOString(), decidedAt: hoursAgo(now, 18).toISOString() },
   ]
 
   // ---- checklists for every approved-or-later job, built with the same generator the app uses ----

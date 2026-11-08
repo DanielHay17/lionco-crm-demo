@@ -66,7 +66,7 @@ export default function Layout() {
 
   const sidebar = (
     <>
-      <div className="px-2 pb-5">
+      <div className="px-2 pb-5 max-lg:hidden">
         <Wordmark height={27} />
       </div>
       <nav className="flex flex-1 flex-col gap-3 overflow-y-auto pr-0.5" aria-label="Main">

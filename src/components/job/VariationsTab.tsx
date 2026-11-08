@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import NumInput from '../NumInput'
 import { Badge, Button, EmptyState, inputCls } from '../ui'
 import { fmtDate, money } from '../../lib/format'
@@ -33,6 +34,7 @@ export default function VariationsTab({ job }: { job: Job }) {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-xs font-bold">{v.number}</span>
+                  {v.quoteId && state.quotes.find((q) => q.id === v.quoteId) && <Link to={`/quotes/${v.quoteId}`} className="text-[11px] font-semibold text-brand-600">on {state.quotes.find((q) => q.id === v.quoteId)!.number}</Link>}
                   <Badge tone={tone[v.status]}>{v.status}</Badge>
                   <span className="text-[11px] text-slate-400">{fmtDate(v.createdAt)}</span>
                 </div>

@@ -448,6 +448,7 @@ export function addVariation(
   const v: Variation = {
     id: newId('var'),
     jobId,
+    quoteId: job.activeQuoteId,
     number: `VAR-${n}`,
     description: input.description.trim(),
     sellDelta: Number.isFinite(input.sellDelta) ? input.sellDelta : 0,
