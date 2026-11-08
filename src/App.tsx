@@ -11,6 +11,8 @@ import Jobs from './pages/Jobs'
 import Packing from './pages/Packing'
 import PackingChecklist from './pages/PackingChecklist'
 import Pipeline from './pages/Pipeline'
+import Roadmap from './pages/Roadmap'
+import Integrations from './pages/Integrations'
 import SiteOverview from './pages/SiteOverview'
 import SiteDocs from './pages/SiteDocs'
 import QuoteBuilder from './pages/QuoteBuilder'
@@ -26,6 +28,8 @@ export default function App() {
         <Route path="jobs" element={<Jobs />} />
         <Route path="jobs/:jobId" element={<JobDetail />} />
         <Route path="jobs/:jobId/docs/:kind" element={<SiteDocs />} />
+        <Route path="integrations" element={<Integrations />} />
+        <Route path="roadmap" element={<Roadmap />} />
         <Route path="site" element={<SiteOverview />} />
         <Route path="expenses" element={<Expenses />} />
         <Route path="packing" element={<Packing />} />

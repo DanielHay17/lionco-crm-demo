@@ -3,9 +3,13 @@
 Clickable MVP demo of a simple in-house "pseudo-Salesforce" CRM/ERP for **Lion & Co Scaffolding** (Sydney, [lioncoscaffolding.com.au](https://lioncoscaffolding.com.au)):
 pipeline, job costing with fixed job codes, a CEO dashboard and truck packing checklists.
 
+> **v2:** the demo now covers the full operational lifecycle, a quote builder, clients, a company map, site documentation, and a mock Integration Centre.
+> See [`docs/CALL_FEATURES.md`](docs/CALL_FEATURES.md) for what is working vs simulated, mock or future, plus assumptions and verification commands.
+> Data is localStorage-only: no sign-in, no backups, no real integrations.
+>
 > **Demo data disclaimer:** every client, person, address, phone number, email, supplier and dollar figure in this
 > app is made-up example data. No real client, job or financial data is included. There is no backend, no accounts and no network
-> calls (the "Xero sync" button is a placeholder).
+> calls (integrations are mock and disconnected).
 
 ## What's in it
 

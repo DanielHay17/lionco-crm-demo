@@ -98,7 +98,7 @@ export function SchematicPlaceholder({ className = '' }: { className?: string })
         {[0, 1, 2, 3].map((i) => (
           <g key={`h${i}`}>
             <line x1="40" y1={118 - i * 34} x2="280" y2={118 - i * 34} stroke="#172566" strokeWidth="3" />
-            <line x1="40" y1={118 - i * 34} x2="120" y2={84 - i * 34} stroke="#64748b" strokeWidth="1.5" />
+            {i < 3 && <line x1="40" y1={118 - i * 34} x2="120" y2={84 - i * 34} stroke="#64748b" strokeWidth="1.5" />}
           </g>
         ))}
         <rect x="40" y="16" width="240" height="4" fill="#94a3b8" />

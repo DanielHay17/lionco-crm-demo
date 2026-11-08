@@ -285,7 +285,7 @@ export default function Dashboard() {
       </div>
 
       <Card className="mt-4">
-        <CardHeader title="Roadmap · v2" sub="Planned next — none of these are built in this demo" right={<Badge>Not built yet</Badge>} />
+        <CardHeader title="Roadmap · v2" sub="Planned next — see Future scope. Integrations in this demo are mock only" right={<Badge>Not built yet</Badge>} />
         <div className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 lg:grid-cols-5 lg:divide-x lg:divide-y-0">
           {ROADMAP.map((r) => (
             <div key={r.title} className="p-4">
