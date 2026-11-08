@@ -11,6 +11,7 @@ import { computeQuote, DEFAULT_TERMS, kitLines, labourLine, newLineId } from './
 import { isKitReserved } from './stages'
 import { monthKey, ymd } from './format'
 import { formatJobCode } from './jobCodes'
+import { buildGeoHistory } from './geoHistory'
 import { computeBalance } from './loadBalance'
 import {
   STAGES,
@@ -472,6 +473,10 @@ export function buildSeed(now: Date = new Date()): AppState {
     { id: 'cap-2', receivedAt: at(2), supplier: 'Eastside Truck Hire', subject: 'Receipt forwarded to bills inbox — forwarding failed', issue: 'forward-failed', amountHint: 630, status: 'pending' },
     { id: 'cap-3', receivedAt: at(4), supplier: 'Sutherland Equipment Hire', subject: 'Your hire invoice (download link)', issue: 'hyperlink-only', link: 'https://hire.example.com/dl/0000 (fictional)', amountHint: 820, status: 'pending' },
   ]
+  const geo = buildGeoHistory({ now, year, startSeq: jobs.length + 1, clients })
+  jobs.push(...geo.jobs)
+  expenses.push(...geo.expenses)
+
   const em = (n: string, jobN: number | undefined, d: number, dir: 'in' | 'out', subject: string, snippet: string): EmailLogEntry => ({ id: `em-${n}`, at: at(d), direction: dir, subject, snippet, jobId: jobN ? jobs[jobN - 1].id : undefined })
   for (const c of clients) {
     const first = jobs.find((j) => j.clientId === c.id)!

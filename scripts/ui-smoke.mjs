@@ -214,7 +214,7 @@ try {
 
   // ---- mobile 390px: no horizontal page overflow, menu opens ----
   await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true })
-  const routes = ['/', '/pipeline', '/jobs', `/jobs/${jobId}`, `/jobs/${jobId}?tab=quote`, `/jobs/${jobId}?tab=site`, `/jobs/${jobId}?tab=variations`, '/clients', `/clients/${clientId}`, '/quotes', `/quotes/${quoteId}`, `/quotes/${quoteId}/preview`, '/map', '/site', '/catalogue', '/packing', `/packing/${jobId}`, '/expenses', '/integrations?tab=xero', '/integrations?tab=capture', '/roadmap', '/roadmap?tab=bi', `/jobs/${jobId}/docs/handover`]
+  const routes = ['/', '/pipeline', '/jobs', `/jobs/${jobId}`, `/jobs/${jobId}?tab=quote`, `/jobs/${jobId}?tab=site`, `/jobs/${jobId}?tab=variations`, '/clients', `/clients/${clientId}`, '/quotes', `/quotes/${quoteId}`, `/quotes/${quoteId}/preview`, '/map', '/analytics', '/site', '/catalogue', '/packing', `/packing/${jobId}`, '/expenses', '/integrations?tab=xero', '/integrations?tab=capture', '/roadmap', '/roadmap?tab=bi', `/jobs/${jobId}/docs/handover`]
   for (const r of routes) {
     await go(`#${r}`)
     await sleep(150)

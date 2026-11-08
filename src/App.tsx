@@ -18,6 +18,7 @@ import SiteDocs from './pages/SiteDocs'
 import QuoteBuilder from './pages/QuoteBuilder'
 import QuotePreview from './pages/QuotePreview'
 import Quotes from './pages/Quotes'
+import Analytics from './pages/Analytics'
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
         <Route path="clients" element={<Clients />} />
         <Route path="clients/:clientId" element={<ClientDetail />} />
         <Route path="map" element={<MapPage />} />
+        <Route path="analytics" element={<Analytics />} />
         <Route path="quotes" element={<Quotes />} />
         <Route path="quotes/:quoteId" element={<QuoteBuilder />} />
         <Route path="quotes/:quoteId/preview" element={<QuotePreview />} />

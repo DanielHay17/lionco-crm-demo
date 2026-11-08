@@ -14,7 +14,7 @@ Legend: **Working** = functioning local feature · **Simulated** = local state c
 | 2 | Editable kit/inventory: quantities, available/reserved, shortage warnings, fictional price list, labour hours, crew formula | **Working** | Kit & Inventory (`/catalogue`): every cell editable; reserved = kit on jobs from *Approved* to *Warehouse return*; shortage banners on job and quote; crew calculator. `lib/inventory.ts`, `lib/crew.ts`. |
 | 3 | Quote builder from kit + job: lines, rental duration, labour/transport/other, totals, margin, deposit, save, printable customer preview, simulated issue/approve/decline, site notes, schematic concept | **Working / Simulated** | Quotes (`/quotes`, `/quotes/:id`, `/quotes/:id/preview`). Preview shows sell prices only. Site notes + attachment *placeholders* (file **name only** — contents never read). `lib/quote.ts`. |
 | 4 | Job records: stable sequential demo IDs, buyer/site-manager contacts, location, client + kit breadcrumbs, quotes, dates; create customer → job → quote | **Working** | New enquiry modal (existing or new client, buyer + site manager), Job detail, Clients. Job numbers are a local simulation (`#seq`, `LC-YYYY-NNN`), never reused, **not** Xero numbers. |
-| 5 | Clients list/detail: editable contacts, linked jobs, LTV/avg ticket, clickable map, mocked Gmail activity; company map with stage-coloured bubbles | **Working** (Gmail **Mock**) | Clients, Client detail, Map. Local SVG schematic map (illustrative, no tokens/APIs); bubbles open the job; stage-group / suburb / date filters; suburb revenue table. |
+| 5 | Clients list/detail: editable contacts, linked jobs, LTV/avg ticket, clickable map, mocked Gmail activity; company map with stage-coloured bubbles | **Working** (Gmail **Mock**) | Clients, Client detail, Map. Local SVG schematic map (illustrative, no tokens/APIs); bubbles open the job; stage-group / suburb / date filters; suburb revenue table. **Analytics** (`/analytics`) is a separate real OpenStreetMap of Greater Sydney (Leaflet): job dots by active / upcoming / completed, suburb revenue as a bar chart plus map bubbles and a sortable table, and an area focus that zooms the map and filters the figures. Tiles load from OpenStreetMap; job data stays in the browser. Older paid sample jobs are included in client LTV and hidden from the live pipeline so the CEO dashboard stays on the current book. |
 
 ## Priority 2 — transcript details
 
@@ -57,9 +57,9 @@ Two assertions in `state.test.ts` that hard-coded the old seed (7 stages; next c
 ```bash
 npm install
 npm run typecheck     # tsc -b
-npm test              # vitest run  (154 tests)
+npm test              # vitest run  (169 tests)
 npm run build         # tsc -b && vite build
-npm run test:ui       # real-browser smoke (needs a local Chrome/Chromium; SKIPs cleanly if none) — 50 checks
+npm run test:ui       # real-browser smoke (needs a local Chrome/Chromium; SKIPs cleanly if none) — 51 checks
 npm run dev           # manual walkthrough, http://localhost:5173
 ```
 

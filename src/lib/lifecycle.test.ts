@@ -3,6 +3,7 @@ import { addJob, approveQuote, createQuote, declineQuote, decideVariation, addVa
 import { computeQuote } from './quote'
 import { buildSeed } from './seed'
 import { setJobCounter } from './state'
+import { formatJobCode } from './jobCodes'
 import { STAGES, type AppState, type Job } from './types'
 import { canMove, stageIndex } from './stages'
 import { addInspection } from './ops'
@@ -161,7 +162,7 @@ describe('lifecycle invariants', () => {
     s = setJobCounter(s, max + 50)
     const a = addJob(s, input, NOW)
     expect(a.job.seq).toBe(max + 50)
-    expect(peekNextCode(a.state, NOW)).toBe(`LC-2026-0${max + 51}`)
+    expect(peekNextCode(a.state, NOW)).toBe(formatJobCode(2026, max + 51))
     assertInvariants(a.state)
   })
 

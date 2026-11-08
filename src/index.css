@@ -167,3 +167,36 @@ textarea {
     break-after: avoid;
   }
 }
+
+/* Leaflet (Analytics). Loaded with the map chunk; these rules keep it inside the page on a phone. */
+.analytics-map {
+  position: relative;
+  z-index: 0;
+  max-width: 100%;
+}
+.analytics-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  font-family: inherit;
+  background: #dbe7f3;
+  z-index: 0;
+}
+.analytics-map .leaflet-control-attribution {
+  white-space: normal;
+  line-height: 1.25;
+  font-size: 10px;
+}
+@media (max-width: 640px) {
+  .analytics-map .leaflet-control-attribution {
+    max-width: min(200px, 58%);
+  }
+}
+.analytics-map .leaflet-popup-content {
+  margin: 10px 12px;
+}
+.analytics-map .leaflet-control-zoom a {
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+}
