@@ -30,7 +30,7 @@ const routes: [string, RegExp][] = [
   ['/quotes', /Quotes/],
   ...seed.quotes.map((q): [string, RegExp] => [`/quotes/${q.id}`, /SIMULATED/]),
   ['/quotes/q-6/preview', /CUSTOMER PREVIEW/],
-  ['/map', /ILLUSTRATIVE/],
+  ['/map', /OpenStreetMap/],
   ['/analytics', /Analytics/],
   ['/site', /DEMO REMINDER/],
   ['/catalogue', /Crew formula calculator/],

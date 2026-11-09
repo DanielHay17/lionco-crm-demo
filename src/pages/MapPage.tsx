@@ -16,9 +16,9 @@ export default function MapPage() {
   const total = rows.reduce((a, r) => a + r.revenue, 0)
   return (
     <div>
-      <PageHeader title="Company Map" subtitle="Every job as a stage-coloured bubble — click one to open it" />
+      <PageHeader title="Company Map" subtitle="Every fictional job on a Sydney street map. Pan and zoom, then open a pin or a row." />
       <p className="mb-3 text-sm text-slate-600">
-        This diagram is approximate. For streets and suburb revenue, open <Link to="/analytics" className="font-semibold text-brand-600">Analytics</Link>.
+        Same OpenStreetMap as <Link to="/analytics" className="font-semibold text-brand-600">Analytics</Link>. Revenue by area lives there. This page keeps the stage filters and the job list.
       </p>
       <MapNote />
       <Card className="mb-4 mt-3 p-4"><MapPanel /></Card>

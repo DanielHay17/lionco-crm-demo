@@ -1,66 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Notice from './Notice'
+import AnalyticsMap from './analytics/AnalyticsMap'
+import type { MapJobPoint } from './analytics/SydneyMap'
 import { inputCls } from './ui'
-import { jobPoint, filterMapJobs, SUBURB_POS } from '../lib/mapgeo'
+import { filterMapJobs } from '../lib/mapgeo'
+import { analyticsStatus } from '../lib/areaAnalytics'
 import { MAP_GROUPS, mapGroupOf, type MapGroup } from '../lib/stages'
-import type { Job } from '../lib/types'
 import { money } from '../lib/format'
 import { useStore } from '../store/StoreProvider'
 
 const GROUP_COLOR = Object.fromEntries(MAP_GROUPS.map((g) => [g.id, g.color])) as Record<MapGroup, string>
-const cap = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase())
-
-/** Local SVG schematic — honestly illustrative: positions are approximate, no map tiles, no API, no tokens. */
-export function SchematicMap({ jobs, onOpen }: { jobs: Job[]; onOpen: (j: Job) => void }) {
-  const [hover, setHover] = useState<Job | null>(null)
-  const pts = jobs.map((j) => ({ j, p: jobPoint(j) }))
-  const anyUnplaced = pts.some((x) => x.p.unplaced)
-  return (
-    <div>
-      <svg viewBox="0 0 100 100" className="w-full rounded-lg border border-slate-200 bg-slate-50" role="group" aria-label="Illustrative job map. Each bubble is a job; activate to open it.">
-        <path d="M100 0 L90 0 C92 18 84 30 90 44 C95 58 86 74 80 100 L100 100 Z" fill="#dbeafe" />
-        <text x="95" y="52" fontSize="2.6" fill="#60a5fa" textAnchor="middle" transform="rotate(90 95 52)">coast (illustrative)</text>
-        {Object.entries(SUBURB_POS).map(([name, [x, y]]) => (
-          <text key={name} x={x} y={y + 5.2} fontSize="2.3" fill="#94a3b8" textAnchor="middle">{cap(name)}</text>
-        ))}
-        {anyUnplaced && (
-          <g>
-            <rect x="2" y="88" width="44" height="10" rx="1.5" fill="#fff" stroke="#cbd5e1" strokeDasharray="1.2 1" />
-            <text x="3.2" y="90.8" fontSize="2.1" fill="#64748b">Suburbs not on this schematic</text>
-          </g>
-        )}
-        {pts.map(({ j, p }) => {
-          const color = GROUP_COLOR[mapGroupOf(j.stage)]
-          const open = () => onOpen(j)
-          return (
-            <g
-              key={j.id}
-              role="link"
-              tabIndex={0}
-              aria-label={`${j.code} ${j.client}, ${j.suburb}, ${j.stage}`}
-              onClick={open}
-              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), open())}
-              onMouseEnter={() => setHover(j)}
-              onMouseLeave={() => setHover(null)}
-              onFocus={() => setHover(j)}
-              onBlur={() => setHover(null)}
-              className="cursor-pointer outline-none [&:focus-visible>circle.ring]:stroke-brand-600"
-            >
-              <circle cx={p.x} cy={p.y} r="4.6" fill="transparent" className="ring" strokeWidth="0.6" stroke="transparent" />
-              <circle cx={p.x} cy={p.y} r="2.7" fill={color} fillOpacity={j.stage === 'Declined' ? 0.5 : 0.9} stroke="#fff" strokeWidth="0.6" strokeDasharray={j.stage === 'Declined' ? '0.8 0.6' : undefined} />
-              <title>{`${j.code} · ${j.client} · ${j.stage} · ${money(j.quote)}`}</title>
-            </g>
-          )
-        })}
-      </svg>
-      <div className="mt-1.5 min-h-[34px] text-xs text-slate-600" aria-live="polite">
-        {hover ? <><b className="font-mono">{hover.code}</b> · {hover.client} · {hover.siteAddress}, {hover.suburb} · {hover.stage} · {money(hover.quote)} <span className="text-slate-400">(click to open)</span></> : 'Hover, focus or tap a bubble for details; click to open the job.'}
-      </div>
-      <p className="text-[11px] italic text-slate-500">Illustrative schematic — positions are approximate and not to scale. No map service, token or geocoding is used.</p>
-    </div>
-  )
-}
 
 /** Map + stage-group, suburb and date filters. `clientId` scopes it to one client's history. */
 export default function MapPanel({ clientId, defaultGroups }: { clientId?: string; defaultGroups?: MapGroup[] }) {
@@ -73,6 +23,11 @@ export default function MapPanel({ clientId, defaultGroups }: { clientId?: strin
   const base = useMemo(() => (clientId ? state.jobs.filter((j) => j.clientId === clientId) : state.jobs), [state.jobs, clientId])
   const suburbs = useMemo(() => [...new Set(base.map((j) => j.suburb))].sort(), [base])
   const shown = filterMapJobs(base, { groups, suburb, from: from || undefined, to: to || undefined, clientId })
+  const points: MapJobPoint[] = shown.flatMap((j) => {
+    if (!Number.isFinite(j.lat) || !Number.isFinite(j.lng)) return []
+    return [{ id: j.id, code: j.code, client: j.client, suburb: j.suburb, address: j.siteAddress, value: j.quote, status: analyticsStatus(j.stage), stage: j.stage, lat: j.lat!, lng: j.lng! }]
+  })
+  const focusKey = suburb ? `suburb:${suburb}` : clientId ? `client:${clientId}` : 'all'
   const toggle = (g: MapGroup) => setGroups((s) => { const n = new Set(s); n.has(g) ? n.delete(g) : n.add(g); return n })
   return (
     <div>
@@ -104,7 +59,9 @@ export default function MapPanel({ clientId, defaultGroups }: { clientId?: strin
         <span className="ml-auto text-xs text-slate-500">{shown.length} of {base.length} jobs shown</span>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2"><SchematicMap jobs={shown} onOpen={(j) => nav(`/jobs/${j.id}`)} /></div>
+        <div className="analytics-map relative h-[420px] w-full max-w-full overflow-hidden rounded-lg border border-slate-200 lg:col-span-2 lg:h-[520px]" role="region" aria-label="OpenStreetMap of fictional Sydney jobs">
+          <AnalyticsMap points={points} bubbles={[]} showBubbles={false} zones={[]} showZones={false} pinMinZoom={0} focusKey={focusKey} />
+        </div>
         <div className="max-h-[420px] overflow-y-auto rounded-lg border border-slate-200 bg-white">
           {shown.length === 0 ? <p className="p-4 text-sm text-slate-500">No jobs match these filters.</p> : (
             <ul className="divide-y divide-slate-100">
@@ -128,4 +85,8 @@ export default function MapPanel({ clientId, defaultGroups }: { clientId?: strin
   )
 }
 
-export const MapNote = () => <Notice tone="info" title="ILLUSTRATIVE MAP">A local SVG schematic — not a real map. Suburb positions are approximate and unknown suburbs go to a holding strip.</Notice>
+export const MapNote = () => (
+  <Notice tone="info" title="OPENSTREETMAP">
+    Street map of Greater Sydney. Pins are random fictional demo sites, not real residents or customers. Tiles load from OpenStreetMap for the area on screen only. No API key.
+  </Notice>
+)

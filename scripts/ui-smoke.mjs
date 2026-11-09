@@ -162,11 +162,13 @@ try {
   check('client link from job', (await page.evaluate(() => location.hash)).endsWith(clientId))
   const t = await page.$$eval('main .tabular', (e) => e.slice(0, 3).map((x) => x.textContent))
   check('client LTV counts the approved job', t[0] !== '$0', t.join(','))
-  await page.evaluate(() => document.querySelector('svg g[role=link]').dispatchEvent(new MouseEvent('click', { bubbles: true })))
+  const jobCode = await page.evaluate((id) => JSON.parse(localStorage.getItem('lionco-crm-demo:v2')).jobs.find((j) => j.id === id).code, jobId)
+  await clickText('button', jobCode)
   await sleep(300)
-  check('map bubble opens the job', (await page.evaluate(() => location.hash)).endsWith(jobId))
+  check('map list opens the job', (await page.evaluate(() => location.hash)).endsWith(jobId))
   await go('#/map')
-  check('company map has bubbles for jobs', (await page.$$eval('svg g[role=link]', (e) => e.length)) >= 5)
+  await sleep(800)
+  check('company map is OpenStreetMap with job pins', await page.evaluate(() => !!document.querySelector('.leaflet-container') && /openstreetmap\.org\/copyright/.test(document.body.innerHTML) && document.querySelectorAll('.leaflet-interactive, .job-count-marker').length >= 1))
 
   // ---- Kanban: columns, buttons and real HTML5 drag/drop ----
   await go('#/pipeline')

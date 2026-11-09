@@ -59,6 +59,10 @@ export interface SydneyMapProps {
   showBubbles: boolean
   /** Booked revenue for the jobs currently on the map, by ABS postal area. */
   zones: ZoneRevenue[]
+  /** When false, only the job pins are drawn. Analytics leaves this on. */
+  showZones?: boolean
+  /** Job pins are hidden below this zoom. Analytics uses 12 so revenue labels stay clear. */
+  pinMinZoom?: number
   /** 'all', 'region:…' or 'suburb:…'. Changing it reframes the map. */
   focusKey: string
 }
@@ -127,7 +131,7 @@ function ViewButtons({ points }: { points: [number, number][] }) {
   return null
 }
 
-function LegendControl() {
+function LegendControl({ showZones }: { showZones: boolean }) {
   const map = useMap()
   useEffect(() => {
     const ctl = new L.Control({ position: 'bottomleft' })
@@ -136,7 +140,10 @@ function LegendControl() {
       const rows = ANALYTICS_STATUSES.map(
         (s) => `<div class="coverage-legend-row"><i style="background:${s.color}"></i><span>${s.label}</span></div>`,
       ).join('')
-      wrap.innerHTML = `<div class="coverage-legend-title">Revenue</div><div class="coverage-ramp"><i style="background:#e8eef6"></i><i style="background:#8f9bd0"></i><i style="background:#172566"></i><span>low → high</span></div><div class="coverage-legend-row"><i class="job-count-swatch">n</i><span>Job count</span></div>${rows}`
+      const revenue = showZones
+        ? `<div class="coverage-legend-title">Revenue</div><div class="coverage-ramp"><i style="background:#e8eef6"></i><i style="background:#8f9bd0"></i><i style="background:#172566"></i><span>low → high</span></div>`
+        : ''
+      wrap.innerHTML = `${revenue}<div class="coverage-legend-row"><i class="job-count-swatch">n</i><span>Job count</span></div>${rows}`
       L.DomEvent.disableClickPropagation(wrap)
       return wrap
     }
@@ -144,7 +151,7 @@ function LegendControl() {
     return () => {
       ctl.remove()
     }
-  }, [map])
+  }, [map, showZones])
   return null
 }
 
@@ -204,7 +211,7 @@ function revenueIcon(zone: ZoneRevenue) {
   })
 }
 
-function PinLayer({ points }: { points: MapJobPoint[] }) {
+function PinLayer({ points, minZoom }: { points: MapJobPoint[]; minZoom: number }) {
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
   useMapEvents({
@@ -212,7 +219,7 @@ function PinLayer({ points }: { points: MapJobPoint[] }) {
       setZoom(map.getZoom())
     },
   })
-  if (zoom < 12) return null
+  if (zoom < minZoom) return null
   const groups = groupPins(points, zoom)
   return (
     <Pane name="job-dots" style={{ zIndex: 460 }}>
@@ -346,7 +353,7 @@ function ZoneLabels({ zones }: { zones: ZoneRevenue[] }) {
   )
 }
 
-export function SydneyMap({ points, bubbles, showBubbles, zones, focusKey }: SydneyMapProps) {
+export function SydneyMap({ points, bubbles, showBubbles, zones, showZones = true, pinMinZoom = 12, focusKey }: SydneyMapProps) {
   const maxRevenue = Math.max(0, ...bubbles.map((b) => b.revenue))
   const frame = points.map((p) => [p.lat, p.lng] as [number, number])
   return (
@@ -369,15 +376,19 @@ export function SydneyMap({ points, bubbles, showBubbles, zones, focusKey }: Syd
         keepBuffer={1}
       />
       <ZoomControl position="topleft" />
-      <Pane name="zones" style={{ zIndex: 350 }}>
-        <ZoneLayer zones={zones} />
-      </Pane>
-      <Pane name="zone-labels" style={{ zIndex: 470 }}>
-        <ZoneLabels zones={zones} />
-      </Pane>
+      {showZones && (
+        <>
+          <Pane name="zones" style={{ zIndex: 350 }}>
+            <ZoneLayer zones={zones} />
+          </Pane>
+          <Pane name="zone-labels" style={{ zIndex: 470 }}>
+            <ZoneLabels zones={zones} />
+          </Pane>
+        </>
+      )}
       <MapFrame points={frame} focusKey={focusKey} />
       <ViewButtons points={frame} />
-      <LegendControl />
+      <LegendControl showZones={showZones} />
       <KeepSized />
       {showBubbles && (
         <Pane name="revenue-bubbles" style={{ zIndex: 400 }}>
@@ -404,7 +415,7 @@ export function SydneyMap({ points, bubbles, showBubbles, zones, focusKey }: Syd
           ))}
         </Pane>
       )}
-      <PinLayer points={points} />
+      <PinLayer points={points} minZoom={pinMinZoom} />
     </MapContainer>
   )
 }
