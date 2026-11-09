@@ -4,7 +4,9 @@ import { monthKey } from './format'
 import { monthlyRevenue } from './state'
 import { buildSeed } from './seed'
 import { ALL_STAGES, type Job, type Stage } from './types'
-import { REGIONS, jobLatLng, regionOf, suburbByName } from './sydneyGeo'
+import { demoSiteCoordinate, SITE_PIN_REV, withDemoSitePin } from './sitePins'
+import { REGIONS, regionOf, suburbByName } from './sydneyGeo'
+import { migrateState } from './migrate'
 import {
   analyticsStatus,
   areaKpis,
@@ -139,11 +141,19 @@ describe('Sydney seed on the analytics map', () => {
   it('has a full spread of fictional jobs, each on a known suburb', () => {
     expect(seed.jobs.length).toBeGreaterThanOrEqual(60)
     expect(seed.jobs.length).toBeLessThanOrEqual(90)
+    const seen = new Map<string, string>()
     for (const j of seed.jobs) {
-      expect(suburbByName(j.suburb), j.suburb).toBeDefined()
-      const ll = jobLatLng(j.id, j.suburb)
-      expect(ll).not.toBeNull()
-      expect(jobLatLng(j.id, j.suburb)).toEqual(ll)
+      const centre = suburbByName(j.suburb)
+      expect(centre, j.suburb).toBeDefined()
+      expect(j.sitePinRev).toBe(SITE_PIN_REV)
+      expect(j.lat).toBeTypeOf('number')
+      expect(j.lng).toBeTypeOf('number')
+      const away = Math.hypot(j.lat! - centre!.lat, j.lng! - centre!.lng)
+      expect(away, j.suburb).toBeGreaterThan(0.0022)
+      const key = `${j.lat},${j.lng}`
+      expect(seen.has(key)).toBe(false)
+      seen.set(key, j.id)
+      expect(demoSiteCoordinate(j.id, j.suburb)).toEqual({ lat: j.lat, lng: j.lng })
     }
     for (const region of REGIONS) {
       const n = seed.jobs.filter((j) => regionOf(j.suburb) === region.id).length
@@ -162,6 +172,23 @@ describe('Sydney seed on the analytics map', () => {
       expect(months.has(monthKey(new Date(j.paidAt!)))).toBe(false)
     }
     for (const j of seed.jobs.filter((j) => j.seq <= 19 && j.paidAt)) expect(isArchivedPaid(j, NOW)).toBe(false)
+  })
+
+  it('migration fills precise demo pins and leaves a current pin alone', () => {
+    const stripped = JSON.parse(JSON.stringify(seed)) as typeof seed
+    for (const j of stripped.jobs) {
+      delete j.lat
+      delete j.lng
+      delete j.sitePinRev
+    }
+    const migrated = migrateState(stripped)!
+    expect(migrated.jobs.map((j) => [j.id, j.lat, j.lng, j.sitePinRev])).toEqual(seed.jobs.map((j) => [j.id, j.lat, j.lng, j.sitePinRev]))
+    const again = migrateState(JSON.parse(JSON.stringify(migrated)))!
+    expect(again.jobs.map((j) => [j.lat, j.lng])).toEqual(migrated.jobs.map((j) => [j.lat, j.lng]))
+    const kept = withDemoSitePin({ id: 'custom', suburb: 'Bondi', lat: -33.8, lng: 151.2, sitePinRev: SITE_PIN_REV })
+    expect(kept).toMatchObject({ lat: -33.8, lng: 151.2 })
+    const centre = suburbByName('Bondi')!
+    expect(Math.hypot(kept.lat! - centre.lat, kept.lng! - centre.lng)).toBeGreaterThan(0)
   })
 
   it('lines suburb revenue and client LTV up with booked jobs, including map history', () => {

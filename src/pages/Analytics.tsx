@@ -19,7 +19,7 @@ import {
   type SuburbSortKey,
 } from '../lib/areaAnalytics'
 import { money } from '../lib/format'
-import { focusPositions, jobLatLng, REGIONS, regionOf, type AreaFocus, type RegionId } from '../lib/sydneyGeo'
+import { REGIONS, regionOf, type AreaFocus, type RegionId } from '../lib/sydneyGeo'
 import { useStore } from '../store/StoreProvider'
 
 const ALL_STATUSES = new Set<AnalyticsStatus>(ANALYTICS_STATUSES.map((s) => s.id))
@@ -31,11 +31,11 @@ export default function Analytics() {
   const [region, setRegion] = useState<RegionId | ''>('')
   const [suburb, setSuburb] = useState('')
   const [statuses, setStatuses] = useState<Set<AnalyticsStatus>>(() => new Set(ALL_STATUSES))
-  const [bubblesOn, setBubblesOn] = useState(true)
+  const [bubblesOn, setBubblesOn] = useState(false)
   const [sort, setSort] = useState<{ key: SuburbSortKey; dir: 1 | -1 }>({ key: 'revenue', dir: -1 })
 
   const focus = useMemo<AreaFocus>(() => (suburb ? { kind: 'suburb', suburb } : region ? { kind: 'region', region } : { kind: 'all' }), [suburb, region])
-  const frame = useMemo(() => focusPositions(focus), [focus])
+  const focusKey = suburb ? `suburb:${suburb}` : region ? `region:${region}` : 'all'
 
   const scoped = useMemo(() => state.jobs.filter((j) => jobInFocus(j, focus) && jobInRange(j, range, now)), [state.jobs, focus, range, now])
   const shown = useMemo(() => filterAnalyticsJobs(state.jobs, { statuses, focus, range, now }), [state.jobs, statuses, focus, range, now])
@@ -55,9 +55,8 @@ export default function Analytics() {
   }, [state.jobs, region])
 
   const points: MapJobPoint[] = shown.flatMap((j) => {
-    const ll = jobLatLng(j.id, j.suburb)
-    if (!ll) return []
-    return [{ id: j.id, code: j.code, client: j.client, suburb: j.suburb, value: j.quote, status: analyticsStatus(j.stage), stage: j.stage, lat: ll.lat, lng: ll.lng }]
+    if (!Number.isFinite(j.lat) || !Number.isFinite(j.lng)) return []
+    return [{ id: j.id, code: j.code, client: j.client, suburb: j.suburb, address: j.siteAddress, value: j.quote, status: analyticsStatus(j.stage), stage: j.stage, lat: j.lat!, lng: j.lng! }]
   })
   const bubbles: MapBubble[] = stats.flatMap((r) => {
     if (r.revenue <= 0 || r.lat == null || r.lng == null) return []
@@ -96,7 +95,7 @@ export default function Analytics() {
     <div>
       <PageHeader
         title="Analytics"
-        subtitle="Where the jobs are across Greater Sydney, so you can focus on an area. Figures are fictional and stay in this browser."
+        subtitle="Coverage map of fictional Sydney jobs. Scroll and zoom from the city to a street, then click a pin for the job. Figures stay in this browser."
       />
       {state.jobs.length < 40 && (
         <Notice className="mb-4" title="OLDER DEMO SAVE">
@@ -176,21 +175,10 @@ export default function Analytics() {
       </Card>
 
       <Card className="mb-4 overflow-hidden">
-        <div className="analytics-map relative h-[380px] w-full max-w-full sm:h-[520px]" role="region" aria-label="Job map of Greater Sydney" data-testid="sydney-map">
-          <AnalyticsMap points={points} bubbles={bubbles} showBubbles={bubblesOn} frame={frame} />
-          <div className="pointer-events-none absolute left-2 top-2 z-[500] max-w-[11rem] rounded-md bg-white/95 px-2 py-1.5 text-[10px] leading-snug text-slate-700 shadow ring-1 ring-slate-200">
-            {ANALYTICS_STATUSES.map((s) => (
-              <div key={s.id} className="flex items-center gap-1.5">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                <span>
-                  {s.label} · {s.detail}
-                </span>
-              </div>
-            ))}
-            {bubblesOn && <div className="mt-1 text-slate-500">Bubble size is suburb revenue</div>}
-          </div>
+        <div className="analytics-map relative h-[62vh] min-h-[420px] w-full max-w-full lg:h-[680px]" role="region" aria-label="Coverage map of fictional Sydney jobs" data-testid="sydney-map">
+          <AnalyticsMap points={points} bubbles={bubbles} showBubbles={bubblesOn} focusKey={focusKey} />
           {points.length === 0 && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-10 z-[500] mx-auto w-fit rounded-md bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-600 shadow ring-1 ring-slate-200">
+            <div className="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-md bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-600 shadow ring-1 ring-slate-200">
               No jobs in this view
             </div>
           )}
@@ -200,7 +188,7 @@ export default function Analytics() {
           <a className="font-semibold text-[#172566] underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             © OpenStreetMap contributors
           </a>
-          . Tiles load from OpenStreetMap when this page is open. Job data is not sent anywhere. Dots sit on the suburb centre with a small offset, not a surveyed street address. Revenue is booked contract value (approved or later), the same basis as client LTV. Enquiries, open quotes and declined jobs stay on the map and out of the revenue totals.
+          . Street tiles are requested from OpenStreetMap only for the area on screen (no API key; a lighter CARTO style would need one). Pins are random fictional demo sites, not real residents, customers or surveyed addresses. The dashed line is a sketch of the demo patch, not an official boundary. Revenue is booked contract value (approved or later), the same basis as client LTV.
         </p>
       </Card>
 

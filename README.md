@@ -20,7 +20,7 @@ pipeline, job costing with fixed job codes, a CEO dashboard and truck packing ch
 | **Job detail** | Header with job code, service type and stage stepper; profit panel with quote-vs-COGS bar; tabs for Kit (editable, from the catalogue), Expenses, Packing and Activity (stage changes auto-logged). |
 | **Expenses** | Always-visible quick-add form; job is picked from a searchable list of existing job codes (never free text, cannot be empty). Captures when / where / who / what / category / why / amount. Filter by job + category, totals, profit rolls up instantly. |
 | **Dashboard** | KPI cards, pipeline value by stage, 12-month revenue vs target, sortable job profitability table, Xero sync placeholder. |
-| **Analytics** | Greater Sydney street map (OpenStreetMap) with a dot per job, status filters, suburb revenue chart, bubbles and table, and an area focus. Separate from the CEO dashboard. |
+| **Analytics** | Coverage map of fictional Sydney jobs on OpenStreetMap (no API key). Pins are random demo sites you can zoom to street level, with status filters, fit-to-jobs, and suburb revenue. Separate from the CEO dashboard. |
 | **Truck packing** | Moving a job to **Approved** (drag, button or stepper) auto-generates a checklist from the kit list (never clobbers existing ticks; "Regenerate" available). Greedy heaviest-first zone balancing, per-line zone dropdown, front/rear + left/right split with top-down truck diagram, red flag if either split is worse than 60/40, tick state persisted, **Print checklist** → clean A4 sheet. |
 | **Kit catalogue** | Component list with unit weights (feeds the load-balance maths). |
 

@@ -12,6 +12,7 @@ import { isKitReserved } from './stages'
 import { monthKey, ymd } from './format'
 import { formatJobCode } from './jobCodes'
 import { buildGeoHistory } from './geoHistory'
+import { withDemoSitePin } from './sitePins'
 import { computeBalance } from './loadBalance'
 import {
   STAGES,
@@ -487,6 +488,8 @@ export function buildSeed(now: Date = new Date()): AppState {
     ]
   }
   clients.find((c) => c.name.startsWith('Hollis'))!.notes = 'Repeat builder client — prefers email. (Fictional demo note.)'
+
+  for (let i = 0; i < jobs.length; i++) jobs[i] = withDemoSitePin(jobs[i])
 
   const history = REVENUE_HISTORY.map((revenue, i) => ({
     month: monthKey(new Date(now.getFullYear(), now.getMonth() - (REVENUE_HISTORY.length - i), 1)),

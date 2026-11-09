@@ -1,6 +1,6 @@
 /**
- * Approximate suburb centres for the Analytics map. Coordinates are public suburb centres
- * (not site addresses) plus a small per-job jitter applied later. Fictional jobs only.
+ * Suburb centres and region frames for Analytics. Job pins are not these centres —
+ * see sitePins.ts for the fictional per-job coordinates.
  */
 
 export const REGIONS = [
@@ -23,7 +23,7 @@ export interface SuburbCentre {
 }
 
 /** Greater Sydney, wide enough for Penrith through the beaches on a phone. */
-export const GREATER_SYDNEY = { center: [-33.87, 151.0] as [number, number], zoom: 9 }
+export const GREATER_SYDNEY = { center: [-33.87, 151.05] as [number, number], zoom: 10 }
 
 export const SUBURBS: SuburbCentre[] = [
   { name: 'Bondi', region: 'eastern', lat: -33.8915, lng: 151.2767 },
@@ -116,33 +116,4 @@ export function regionById(id: RegionId) {
   return REGIONS.find((r) => r.id === id)
 }
 
-const hash = (s: string) => {
-  let h = 2166136261
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619)
-  return h >>> 0
-}
-
-/**
- * Suburb centre plus a stable offset so jobs in the same suburb do not sit on one pixel.
- * Offset is about ±700 m. Not a geocoded street address.
- */
-export function jobLatLng(id: string, suburb: string): { lat: number; lng: number } | null {
-  const base = suburbByName(suburb)
-  if (!base) return null
-  const h = hash(id)
-  const lat = base.lat + ((h % 1000) / 1000 - 0.5) * 0.012
-  const lng = base.lng + (((h >>> 10) % 1000) / 1000 - 0.5) * 0.014
-  return { lat, lng }
-}
-
 export type AreaFocus = { kind: 'all' } | { kind: 'region'; region: RegionId } | { kind: 'suburb'; suburb: string }
-
-/** Positions used to frame the map. One suburb zooms in; a region or the whole city fits every centre. */
-export function focusPositions(focus: AreaFocus): [number, number][] {
-  if (focus.kind === 'suburb') {
-    const s = suburbByName(focus.suburb)
-    return s ? [[s.lat, s.lng]] : [GREATER_SYDNEY.center]
-  }
-  const list = SUBURBS.filter((s) => focus.kind === 'all' || s.region === focus.region)
-  return list.length ? list.map((s) => [s.lat, s.lng]) : [GREATER_SYDNEY.center]
-}

@@ -2,6 +2,7 @@ import { buildChecklist, kitSignature, setLineZone as setZone, toggleTick as tic
 import { addDays, dateOnly } from './dates'
 import { monthKey } from './format'
 import { formatJobCode, parseJobCode } from './jobCodes'
+import { withDemoSitePin } from './sitePins'
 import { computeFinancials, sumCogs, type Financials } from './profit'
 import { computeQuote, newQuoteDraft, quoteKit } from './quote'
 import {
@@ -338,7 +339,8 @@ export function addJob(s: AppState, input: NewJobInput, now: Date): { state: App
       ...(input.notes?.trim() ? [entry('note', input.notes.trim(), at)] : []),
     ],
   }
-  return { state: { ...state, jobs: [...state.jobs, job], jobCounter: seq + 1 }, job }
+  const pinned = withDemoSitePin(job)
+  return { state: { ...state, jobs: [...state.jobs, pinned], jobCounter: seq + 1 }, job: pinned }
 }
 
 export function setQuote(s: AppState, jobId: string, quote: number, at: string): AppState {
