@@ -8,7 +8,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { CircleMarker, MapContainer, Marker, Pane, Polygon, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
+import { CircleMarker, GeoJSON, MapContainer, Marker, Pane, Popup, TileLayer, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import iconUrl from 'leaflet/dist/images/marker-icon.png'
 import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png'
@@ -17,6 +17,8 @@ import 'leaflet/dist/leaflet.css'
 import { ANALYTICS_STATUSES, bubbleRadiusPx, statusColor, type AnalyticsStatus } from '../../lib/areaAnalytics'
 import { GREATER_SYDNEY } from '../../lib/sydneyGeo'
 import { money } from '../../lib/format'
+import areas from '../../data/poa-sydney-2021.json'
+import { revenueShade, type ZoneRevenue } from '../../lib/revenueZones'
 
 const defaultIcon = L.icon({
   iconUrl,
@@ -28,18 +30,6 @@ const defaultIcon = L.icon({
   shadowSize: [41, 41],
 })
 L.Marker.prototype.options.icon = defaultIcon
-
-/** Rough sketch of the demo patch. Not an official boundary. */
-const SYDNEY_PATCH: [number, number][] = [
-  [-33.6, 150.8],
-  [-33.66, 151.3],
-  [-33.86, 151.34],
-  [-34.09, 151.23],
-  [-34.12, 150.96],
-  [-33.96, 150.7],
-  [-33.74, 150.6],
-  [-33.6, 150.8],
-]
 
 export interface MapJobPoint {
   id: string
@@ -67,6 +57,12 @@ export interface SydneyMapProps {
   points: MapJobPoint[]
   bubbles: MapBubble[]
   showBubbles: boolean
+  /** Booked revenue for the jobs currently on the map, by ABS postal area. */
+  zones: ZoneRevenue[]
+  /** When false, only the job pins are drawn. Analytics leaves this on. */
+  showZones?: boolean
+  /** Job pins are hidden below this zoom. Analytics uses 12 so revenue labels stay clear. */
+  pinMinZoom?: number
   /** 'all', 'region:…' or 'suburb:…'. Changing it reframes the map. */
   focusKey: string
 }
@@ -135,7 +131,7 @@ function ViewButtons({ points }: { points: [number, number][] }) {
   return null
 }
 
-function LegendControl() {
+function LegendControl({ showZones }: { showZones: boolean }) {
   const map = useMap()
   useEffect(() => {
     const ctl = new L.Control({ position: 'bottomleft' })
@@ -144,7 +140,10 @@ function LegendControl() {
       const rows = ANALYTICS_STATUSES.map(
         (s) => `<div class="coverage-legend-row"><i style="background:${s.color}"></i><span>${s.label}</span></div>`,
       ).join('')
-      wrap.innerHTML = `${rows}<div class="coverage-legend-row"><i class="coverage-legend-dash"></i><span>Demo patch</span></div>`
+      const revenue = showZones
+        ? `<div class="coverage-legend-title">Revenue</div><div class="coverage-ramp"><i style="background:#e8eef6"></i><i style="background:#8f9bd0"></i><i style="background:#172566"></i><span>low → high</span></div>`
+        : ''
+      wrap.innerHTML = `${revenue}<div class="coverage-legend-row"><i class="job-count-swatch">n</i><span>Job count</span></div>${rows}`
       L.DomEvent.disableClickPropagation(wrap)
       return wrap
     }
@@ -152,7 +151,7 @@ function LegendControl() {
     return () => {
       ctl.remove()
     }
-  }, [map])
+  }, [map, showZones])
   return null
 }
 
@@ -194,15 +193,25 @@ function groupPins(points: MapJobPoint[], zoom: number): Cluster[] {
 }
 
 function clusterIcon(count: number) {
+  const size = 52
   return L.divIcon({
-    className: 'coverage-cluster',
-    html: `<span>${count}</span>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
+    className: 'job-count-marker',
+    html: `<span class="job-count-n">${count}</span><span class="job-count-l">jobs</span>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   })
 }
 
-function PinLayer({ points }: { points: MapJobPoint[] }) {
+function revenueIcon(zone: ZoneRevenue) {
+  return L.divIcon({
+    className: 'zone-rev-marker',
+    html: `<span class="zone-rev-code">${zone.code}</span><span class="zone-rev-amt">${money(zone.revenue)}</span>`,
+    iconSize: [112, 46],
+    iconAnchor: [56, 23],
+  })
+}
+
+function PinLayer({ points, minZoom }: { points: MapJobPoint[]; minZoom: number }) {
   const map = useMap()
   const [zoom, setZoom] = useState(() => map.getZoom())
   useMapEvents({
@@ -210,6 +219,7 @@ function PinLayer({ points }: { points: MapJobPoint[] }) {
       setZoom(map.getZoom())
     },
   })
+  if (zoom < minZoom) return null
   const groups = groupPins(points, zoom)
   return (
     <Pane name="job-dots" style={{ zIndex: 460 }}>
@@ -268,7 +278,82 @@ function JobPin({ point }: { point: MapJobPoint }) {
   )
 }
 
-export function SydneyMap({ points, bubbles, showBubbles, focusKey }: SydneyMapProps) {
+function ZoneLayer({ zones }: { zones: ZoneRevenue[] }) {
+  const map = useMap()
+  const lookup = new Map(zones.map((zone) => [zone.code, zone]))
+  const max = Math.max(0, ...zones.map((zone) => zone.revenue))
+  const key = zones.map((zone) => `${zone.code}:${zone.revenue}:${zone.jobs}`).join('|')
+  return (
+    <GeoJSON
+      key={key}
+      data={areas as never}
+      pane="zones"
+      style={(feature) => {
+        const revenue = lookup.get(String(feature?.properties?.code ?? ''))?.revenue ?? 0
+        return {
+          color: revenue > 0 ? '#172566' : '#94a3b8',
+          weight: revenue > 0 ? 1.5 : 1,
+          fillColor: revenueShade(revenue, max),
+          fillOpacity: revenue > 0 ? 0.62 : 0.18,
+        }
+      }}
+      onEachFeature={(feature, layer) => {
+        layer.on('click', () => {
+          const polygon = layer as L.Polygon
+          const code = String(feature?.properties?.code ?? '')
+          const stat = lookup.get(code)
+          map.fitBounds(polygon.getBounds(), { padding: [32, 32], maxZoom: 14, animate: !prefersStill() })
+          const revenue = stat?.revenue ?? 0
+          const jobs = stat?.jobs ?? 0
+          const booked = stat?.booked ?? 0
+          polygon
+            .bindPopup(
+              `<div class="zone-popup"><div class="zone-popup-code">Postal area ${code}</div><div class="zone-popup-amt">${money(revenue)}</div><div>${jobs} job${jobs === 1 ? '' : 's'} in this view · ${booked} booked</div><p>ABS postal area, a statistical stand-in for the postcode. Not an Australia Post boundary. Revenue is booked contract value for the fictional jobs in the current filters.</p></div>`,
+            )
+            .openPopup()
+        })
+      }}
+    />
+  )
+}
+
+function ZoneLabels({ zones }: { zones: ZoneRevenue[] }) {
+  const map = useMap()
+  const [tick, setTick] = useState(0)
+  useMapEvents({
+    zoomend() {
+      setTick((value) => value + 1)
+    },
+    moveend() {
+      setTick((value) => value + 1)
+    },
+  })
+  useEffect(() => {
+    const timer = window.setTimeout(() => setTick((value) => value + 1), 120)
+    return () => window.clearTimeout(timer)
+  }, [zones])
+  void tick
+  if (map.getZoom() >= 14) return null
+  const placed: { x: number; y: number }[] = []
+  const visible: ZoneRevenue[] = []
+  const size = map.getSize()
+  for (const zone of [...zones].filter((item) => item.revenue > 0).sort((a, b) => b.revenue - a.revenue)) {
+    const point = map.latLngToContainerPoint([zone.lat, zone.lng])
+    if (point.x < 20 || point.y < 20 || point.x > size.x - 20 || point.y > size.y - 20) continue
+    if (placed.some((item) => Math.abs(item.x - point.x) < 108 && Math.abs(item.y - point.y) < 42)) continue
+    placed.push(point)
+    visible.push(zone)
+  }
+  return (
+    <>
+      {visible.map((zone) => (
+        <Marker key={zone.code} position={[zone.lat, zone.lng]} pane="zone-labels" interactive={false} icon={revenueIcon(zone)} />
+      ))}
+    </>
+  )
+}
+
+export function SydneyMap({ points, bubbles, showBubbles, zones, showZones = true, pinMinZoom = 12, focusKey }: SydneyMapProps) {
   const maxRevenue = Math.max(0, ...bubbles.map((b) => b.revenue))
   const frame = points.map((p) => [p.lat, p.lng] as [number, number])
   return (
@@ -291,10 +376,19 @@ export function SydneyMap({ points, bubbles, showBubbles, focusKey }: SydneyMapP
         keepBuffer={1}
       />
       <ZoomControl position="topleft" />
-      <Polygon positions={SYDNEY_PATCH} pathOptions={{ color: '#172566', weight: 1.5, dashArray: '7 6', fillColor: '#172566', fillOpacity: 0.04 }} />
+      {showZones && (
+        <>
+          <Pane name="zones" style={{ zIndex: 350 }}>
+            <ZoneLayer zones={zones} />
+          </Pane>
+          <Pane name="zone-labels" style={{ zIndex: 470 }}>
+            <ZoneLabels zones={zones} />
+          </Pane>
+        </>
+      )}
       <MapFrame points={frame} focusKey={focusKey} />
       <ViewButtons points={frame} />
-      <LegendControl />
+      <LegendControl showZones={showZones} />
       <KeepSized />
       {showBubbles && (
         <Pane name="revenue-bubbles" style={{ zIndex: 400 }}>
@@ -321,7 +415,7 @@ export function SydneyMap({ points, bubbles, showBubbles, focusKey }: SydneyMapP
           ))}
         </Pane>
       )}
-      <PinLayer points={points} />
+      <PinLayer points={points} minZoom={pinMinZoom} />
     </MapContainer>
   )
 }

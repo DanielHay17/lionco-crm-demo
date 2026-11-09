@@ -19,6 +19,7 @@ import {
   type SuburbSortKey,
 } from '../lib/areaAnalytics'
 import { money } from '../lib/format'
+import { revenueByPostalArea } from '../lib/revenueZones'
 import { REGIONS, regionOf, type AreaFocus, type RegionId } from '../lib/sydneyGeo'
 import { useStore } from '../store/StoreProvider'
 
@@ -54,6 +55,7 @@ export default function Analytics() {
     return [...names].sort((a, b) => a.localeCompare(b))
   }, [state.jobs, region])
 
+  const zones = useMemo(() => revenueByPostalArea(shown), [shown])
   const points: MapJobPoint[] = shown.flatMap((j) => {
     if (!Number.isFinite(j.lat) || !Number.isFinite(j.lng)) return []
     return [{ id: j.id, code: j.code, client: j.client, suburb: j.suburb, address: j.siteAddress, value: j.quote, status: analyticsStatus(j.stage), stage: j.stage, lat: j.lat!, lng: j.lng! }]
@@ -176,7 +178,7 @@ export default function Analytics() {
 
       <Card className="mb-4 overflow-hidden">
         <div className="analytics-map relative h-[62vh] min-h-[420px] w-full max-w-full lg:h-[680px]" role="region" aria-label="Coverage map of fictional Sydney jobs" data-testid="sydney-map">
-          <AnalyticsMap points={points} bubbles={bubbles} showBubbles={bubblesOn} focusKey={focusKey} />
+          <AnalyticsMap points={points} bubbles={bubbles} showBubbles={bubblesOn} zones={zones} focusKey={focusKey} />
           {points.length === 0 && (
             <div className="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-md bg-white/95 px-3 py-1.5 text-xs font-medium text-slate-600 shadow ring-1 ring-slate-200">
               No jobs in this view
@@ -188,7 +190,7 @@ export default function Analytics() {
           <a className="font-semibold text-[#172566] underline" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">
             © OpenStreetMap contributors
           </a>
-          . Street tiles are requested from OpenStreetMap only for the area on screen (no API key; a lighter CARTO style would need one). Pins are random fictional demo sites, not real residents, customers or surveyed addresses. The dashed line is a sketch of the demo patch, not an official boundary. Revenue is booked contract value (approved or later), the same basis as client LTV.
+          . Shaded areas are Australian Bureau of Statistics postal areas (ASGS Edition 3, 2021, CC BY 4.0), simplified by about 400 metres. They approximate postcodes and are not Australia Post boundaries. Dollar labels are booked revenue for the fictional jobs in the current filters. Circles marked “jobs” are counts, not dollars. Street tiles are requested from OpenStreetMap only for the area on screen (no API key). Pins are random fictional demo sites, not real residents or customers.
         </p>
       </Card>
 
