@@ -10,6 +10,7 @@ import { inspectionStatus } from '../lib/inspection'
 import { stockRows } from '../lib/inventory'
 import { computeFinancials } from '../lib/profit'
 import { jobFinancials, monthlyRevenue } from '../lib/state'
+import { isArchivedPaid } from '../lib/areaAnalytics'
 import { isCosted, isInField, isPaidStage } from '../lib/stages'
 import { STAGES } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
@@ -38,7 +39,8 @@ export default function Dashboard() {
   const inProgress = state.jobs.filter((j) => isInField(j.stage) && j.stage !== 'Approved')
   const approved = state.jobs.filter((j) => j.stage === 'Approved')
 
-  const costed = state.jobs.filter((j) => isCosted(j.stage)).map((j) => ({ job: j, f: jobFinancials(state, j) }))
+  // Older paid sample jobs belong on Analytics and in client LTV, not in this month's margin.
+  const costed = state.jobs.filter((j) => isCosted(j.stage) && !isArchivedPaid(j, now)).map((j) => ({ job: j, f: jobFinancials(state, j) }))
   const blended = computeFinancials(
     costed.reduce((s, r) => s + r.f.quote, 0),
     costed.reduce((s, r) => s + r.f.cogs, 0),

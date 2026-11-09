@@ -167,3 +167,99 @@ textarea {
     break-after: avoid;
   }
 }
+
+/* Leaflet (Analytics). Loaded with the map chunk; these rules keep it inside the page on a phone. */
+.analytics-map {
+  position: relative;
+  z-index: 0;
+  max-width: 100%;
+}
+.analytics-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  font-family: inherit;
+  background: #dbe7f3;
+  z-index: 0;
+}
+.analytics-map .leaflet-control-attribution {
+  white-space: normal;
+  line-height: 1.25;
+  font-size: 10px;
+}
+@media (max-width: 640px) {
+  .analytics-map .leaflet-control-attribution {
+    max-width: min(200px, 58%);
+  }
+}
+.analytics-map .leaflet-popup-content {
+  margin: 10px 12px;
+}
+.analytics-map .leaflet-control-zoom a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  font-size: 18px;
+}
+.analytics-map .leaflet-top .leaflet-control {
+  margin-top: 10px;
+}
+.coverage-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #172566;
+  color: #fff;
+  font: 700 13px/1 Inter, ui-sans-serif, sans-serif;
+  box-shadow: 0 1px 4px rgba(16, 18, 21, 0.35);
+}
+.coverage-legend {
+  max-width: 148px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 8px 10px;
+  color: #101215;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 1px 4px rgba(16, 18, 21, 0.18);
+}
+.coverage-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.coverage-legend-row + .coverage-legend-row {
+  margin-top: 3px;
+}
+.coverage-legend-row i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 999px;
+}
+.coverage-legend-dash {
+  width: 14px !important;
+  height: 0 !important;
+  border-top: 2px dashed #172566;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+.coverage-view-toggle {
+  display: flex;
+  gap: 6px;
+}
+.coverage-view-toggle button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0 12px;
+  color: #172566;
+  font: 600 13px/1 Inter, ui-sans-serif, sans-serif;
+  box-shadow: 0 1px 4px rgba(16, 18, 21, 0.2);
+}

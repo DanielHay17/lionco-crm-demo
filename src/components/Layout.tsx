@@ -23,6 +23,7 @@ const ICON = {
   kit: 'M4 5h16v3H4V5zm0 5.5h16v3H4v-3zM4 16h16v3H4v-3z',
   plug: 'M16 7V2h-2v5h-4V2H8v5H6v6a4 4 0 004 4v5h4v-5a4 4 0 004-4V7h-2z',
   road: 'M3 17l6-6 4 4 8-8v4h2V3h-8v2h4l-6 6-4-4-8 8 2 2z',
+  chart: 'M4 19V9h3v10H4zm6.5 0V5h3v14h-3zM17 19v-6h3v6h-3z',
 }
 const GROUPS: { title: string; items: NavItem[] }[] = [
   {
@@ -34,6 +35,7 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
       { to: '/jobs', label: 'Jobs', icon: ICON.jobs },
       { to: '/quotes', label: 'Quotes', icon: ICON.quote },
       { to: '/map', label: 'Map', icon: ICON.map },
+      { to: '/analytics', label: 'Analytics', icon: ICON.chart },
     ],
   },
   {

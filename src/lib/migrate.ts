@@ -1,5 +1,6 @@
 import { defaultPricing } from './kitPricing'
 import { parseJobCode } from './jobCodes'
+import { withDemoSitePin } from './sitePins'
 import { isStage } from './stages'
 import type { AppState, Client, Contact, Job, KitItem, MigrationItem, Settings, SiteDocsStatus } from './types'
 
@@ -80,7 +81,7 @@ export function migrateState(raw: unknown): AppState | null {
     }
     const seq = numOr(legacy.seq, parseJobCode(str(legacy.code))?.seq ?? i + 1)
     maxSeq = Math.max(maxSeq, seq)
-    return {
+    return withDemoSitePin({
       ...(legacy as Job),
       seq,
       clientId,
@@ -93,7 +94,7 @@ export function migrateState(raw: unknown): AppState | null {
       dates: legacy.dates ?? {},
       inspections: legacy.inspections ?? [],
       siteDocs: legacy.siteDocs ?? { ...DEFAULT_DOCS },
-    }
+    })
   })
 
   return {

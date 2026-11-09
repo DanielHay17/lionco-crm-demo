@@ -169,6 +169,14 @@ export interface Job {
   siteContactId?: string
   siteAddress: string
   suburb: string
+  /**
+   * Fictional demo map pin (random point in the suburb). Not a surveyed address.
+   * Absent on jobs saved before precise pins; migration fills it in.
+   */
+  lat?: number
+  lng?: number
+  /** Matches SITE_PIN_REV when lat/lng are the current demo pins, not suburb centres. */
+  sitePinRev?: number
   stage: Stage
   quote: number // AUD ex GST — contract value (active quote sell + approved variations)
   activeQuoteId?: string

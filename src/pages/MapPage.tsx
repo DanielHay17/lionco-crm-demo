@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import MapPanel, { MapNote } from '../components/MapPanel'
 import { Card, CardHeader, EmptyState, inputCls, PageHeader } from '../components/ui'
 import { suburbRevenue } from '../lib/analytics'
@@ -16,6 +17,9 @@ export default function MapPage() {
   return (
     <div>
       <PageHeader title="Company Map" subtitle="Every job as a stage-coloured bubble — click one to open it" />
+      <p className="mb-3 text-sm text-slate-600">
+        This diagram is approximate. For streets and suburb revenue, open <Link to="/analytics" className="font-semibold text-brand-600">Analytics</Link>.
+      </p>
       <MapNote />
       <Card className="mb-4 mt-3 p-4"><MapPanel /></Card>
       <Card>

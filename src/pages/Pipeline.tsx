@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import JobCard from '../components/JobCard'
 import NewEnquiryModal from '../components/NewEnquiryModal'
 import { Button, PageHeader, stageColor } from '../components/ui'
 import DeclineModal from '../components/DeclineModal'
+import { isArchivedPaid } from '../lib/areaAnalytics'
 import { money } from '../lib/format'
 import { PHASES, STAGE_HINT, type PhaseId } from '../lib/stages'
 import { SERVICE_TYPES, type Stage } from '../lib/types'
@@ -16,14 +17,15 @@ export default function Pipeline() {
   const [service, setService] = useState<string>('')
   const [phase, setPhase] = useState<PhaseId | ''>('')
   const [declineId, setDeclineId] = useState<string | null>(null)
+  const now = useMemo(() => new Date(), [])
 
-  const visible = state.jobs.filter((j) => !service || j.serviceType === service || (service === 'Drone Services' && j.droneSurvey))
+  const visible = state.jobs.filter((j) => !isArchivedPaid(j, now) && (!service || j.serviceType === service || (service === 'Drone Services' && j.droneSurvey)))
   const total = visible.reduce((s, j) => s + j.quote, 0)
   return (
     <div>
       <PageHeader
         title="Pipeline"
-        subtitle={`${visible.length} jobs · ${money(total)} total value · drag cards, or use the ◀ ▶ buttons. Scroll sideways for later stages.`}
+        subtitle={`${visible.length} in the live pipeline · ${money(total)} · drag cards or use ◀ ▶. Older paid jobs stay on the client and in Analytics.`}
         actions={
           <Button variant="primary" onClick={() => setNewOpen(true)}>
             ＋ New enquiry
