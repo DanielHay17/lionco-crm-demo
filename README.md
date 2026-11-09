@@ -3,9 +3,14 @@
 Clickable MVP demo of a simple in-house "pseudo-Salesforce" CRM/ERP for **Lion & Co Scaffolding** (Sydney, [lioncoscaffolding.com.au](https://lioncoscaffolding.com.au)):
 pipeline, job costing with fixed job codes, a CEO dashboard and truck packing checklists.
 
+> **v2:** the demo now covers the full operational lifecycle, a quote builder, clients, a company map, site documentation, and a mock Integration Centre.
+> See [`docs/CALL_FEATURES.md`](docs/CALL_FEATURES.md) for what is working vs simulated, mock or future, plus assumptions and verification commands.
+> Data is localStorage-only: no sign-in, no backups, no real integrations.
+>
 > **Demo data disclaimer:** every client, person, address, phone number, email, supplier and dollar figure in this
-> app is made-up example data. No real client, job or financial data is included. There is no backend, no accounts and no network
-> calls (the "Xero sync" button is a placeholder).
+> app is made-up example data. No real client, job or financial data is included. There is no backend and no accounts.
+> Integrations are mock and disconnected. The Analytics map is the one exception: it loads street tiles from OpenStreetMap.
+> Job data still never leaves the browser.
 
 ## What's in it
 
@@ -15,6 +20,7 @@ pipeline, job costing with fixed job codes, a CEO dashboard and truck packing ch
 | **Job detail** | Header with job code, service type and stage stepper; profit panel with quote-vs-COGS bar; tabs for Kit (editable, from the catalogue), Expenses, Packing and Activity (stage changes auto-logged). |
 | **Expenses** | Always-visible quick-add form; job is picked from a searchable list of existing job codes (never free text, cannot be empty). Captures when / where / who / what / category / why / amount. Filter by job + category, totals, profit rolls up instantly. |
 | **Dashboard** | KPI cards, pipeline value by stage, 12-month revenue vs target, sortable job profitability table, Xero sync placeholder. |
+| **Analytics** | Coverage map of fictional Sydney jobs on OpenStreetMap (no API key). Pins are random demo sites you can zoom to street level, with status filters, fit-to-jobs, and suburb revenue. Separate from the CEO dashboard. |
 | **Truck packing** | Moving a job to **Approved** (drag, button or stepper) auto-generates a checklist from the kit list (never clobbers existing ticks; "Regenerate" available). Greedy heaviest-first zone balancing, per-line zone dropdown, front/rear + left/right split with top-down truck diagram, red flag if either split is worse than 60/40, tick state persisted, **Print checklist** → clean A4 sheet. |
 | **Kit catalogue** | Component list with unit weights (feeds the load-balance maths). |
 
@@ -27,7 +33,8 @@ npm install
 npm run dev          # http://localhost:5173
 npm run build        # typecheck (tsc -b) + production build into dist/
 npm run typecheck
-npm test             # vitest: load-balance, profit, job-code and state tests
+npm test             # vitest: logic, migration, lifecycle and route smoke tests
+npm run test:ui      # optional real-browser smoke (needs local Chrome; see docs/CALL_FEATURES.md)
 npx vite preview     # serve the production build locally
 ```
 
@@ -39,8 +46,9 @@ are used *only* for status (margins, load balance). Josefin Sans (headings/nav) 
 `@fontsource` — no runtime calls to Google Fonts. The roadmap card on the dashboard lists v2 ideas (Xero sync, Google review
 automation, mobile receipt capture, drone survey uploads, customer portal) and is clearly marked as **not built**.
 
-Stack: Vite + React + TypeScript + Tailwind v4 + react-router (HashRouter) + recharts. Frontend only — `dist/` is
-static and deploys as-is to Cloudflare Pages (`public/_redirects` is included too).
+Stack: Vite + React + TypeScript + Tailwind v4 + react-router (HashRouter) + recharts + Leaflet. Frontend only — `dist/` is
+static and deploys as-is to Cloudflare Pages (`public/_redirects` is included too). Leaflet's CSS and marker images are bundled;
+the map is created in the browser, not during a server render.
 
 Business logic is kept out of the components: `src/lib/loadBalance.ts`, `profit.ts`, `jobCodes.ts`, `checklist.ts`,
 `state.ts` (pure state transitions), `seed.ts` (demo data, generated relative to today's date).

@@ -1,6 +1,7 @@
 import { useEffect, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import { marginStatus, type Financials, type MarginStatus } from '../lib/profit'
 import { pct, money } from '../lib/format'
+import { STAGE_COLOR, stageIndex } from '../lib/stages'
 import { STAGES, type Stage } from '../lib/types'
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: ReactNode; actions?: ReactNode }) {
@@ -52,7 +53,7 @@ export function Button({
     <button
       {...rest}
       className={`inline-flex items-center justify-center gap-1.5 rounded-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
-        size === 'sm' ? 'px-2.5 py-1 text-xs' : 'px-3.5 py-2 text-sm'
+        size === 'sm' ? 'min-h-[34px] px-2.5 py-1 text-xs' : 'min-h-[40px] px-3.5 py-2 text-sm'
       } ${variants[variant]} ${className}`}
     />
   )
@@ -92,16 +93,7 @@ export function MarginBadge({ f, compact }: { f: Financials; compact?: boolean }
   )
 }
 
-/** Stage accents — deliberately not green/amber/red, which are reserved for status. */
-export const stageColor: Record<Stage, string> = {
-  Enquiry: '#94a3b8',
-  Quote: '#38bdf8',
-  Approved: '#6366f1',
-  'Job in progress': '#172566',
-  Invoiced: '#a855f7',
-  Paid: '#0891b2',
-  'Google review requested': '#475569',
-}
+export const stageColor = STAGE_COLOR
 export function StageBadge({ stage }: { stage: Stage }) {
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-200">
@@ -228,14 +220,14 @@ export function Tabs<T extends string>({
   onChange: (t: T) => void
 }) {
   return (
-    <div role="tablist" className="flex gap-1 border-b border-slate-200 px-3">
+    <div role="tablist" className="scroll-thin flex max-w-full gap-1 overflow-x-auto border-b border-slate-200 px-3">
       {tabs.map((t) => (
         <button
           key={t.id}
           role="tab"
           aria-selected={value === t.id}
           onClick={() => onChange(t.id)}
-          className={`-mb-px flex items-center gap-2 border-b-2 px-3.5 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors ${
+          className={`-mb-px flex min-h-[44px] shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-3.5 py-3 font-display text-[13px] font-semibold uppercase tracking-[0.1em] transition-colors ${
             value === t.id ? 'border-brand-600 text-brand-600' : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
@@ -265,32 +257,47 @@ export function Field({ label, error, hint, children }: { label: string; error?:
 export const inputCls =
   'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-ink placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100'
 
+/**
+ * Lifecycle breadcrumb: every operational stage, scrollable on phones. Clicking a step moves the job there
+ * (same code path as the Kanban). Declined jobs show a banner instead of progress.
+ */
 export function StageStepper({ stage, onSelect }: { stage: Stage; onSelect: (s: Stage) => void }) {
-  const idx = STAGES.indexOf(stage)
+  const idx = stageIndex(stage)
+  const declined = stage === 'Declined'
   return (
-    <ol className="flex items-center gap-1">
-      {STAGES.map((s, i) => {
-        const done = i < idx
-        const cur = i === idx
-        return (
-          <li key={s} className="flex flex-1 items-center">
-            <button
-              onClick={() => onSelect(s)}
-              title={`Set stage: ${s}`}
-              className={`flex w-full flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center transition-colors hover:bg-slate-100`}
-            >
-              <span
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
-                  cur ? 'bg-brand-600 text-white ring-4 ring-brand-100' : done ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-500'
-                }`}
+    <div>
+      {declined && (
+        <p className="mb-2 rounded-md bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+          Declined — re-open to Enquiry or Quote using the steps below.
+        </p>
+      )}
+      <ol className="scroll-thin flex items-start gap-0.5 overflow-x-auto pb-1" aria-label="Job lifecycle">
+        {STAGES.map((s, i) => {
+          const done = !declined && i < idx
+          const cur = i === idx
+          const reopenable = declined && (s === 'Enquiry' || s === 'Quote')
+          return (
+            <li key={s} className="min-w-[78px] flex-1">
+              <button
+                onClick={() => onSelect(s)}
+                disabled={declined && !reopenable}
+                aria-current={cur ? 'step' : undefined}
+                title={declined && !reopenable ? 'Re-open the job first' : `Set stage: ${s}`}
+                className="flex min-h-[44px] w-full flex-col items-center gap-1 rounded-lg px-1 py-1.5 text-center transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
               >
-                {done ? '✓' : i + 1}
-              </span>
-              <span className={`text-[10.5px] leading-tight ${cur ? 'font-bold text-ink' : 'text-slate-500'}`}>{s}</span>
-            </button>
-          </li>
-        )
-      })}
-    </ol>
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold ${
+                    cur ? 'bg-brand-600 text-white ring-4 ring-brand-100' : done ? 'bg-slate-800 text-white' : 'bg-slate-200 text-slate-500'
+                  }`}
+                >
+                  {done ? '✓' : i + 1}
+                </span>
+                <span className={`text-[10.5px] leading-tight ${cur ? 'font-bold text-ink' : 'text-slate-500'}`}>{s}</span>
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </div>
   )
 }

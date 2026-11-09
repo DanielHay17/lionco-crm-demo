@@ -1,24 +1,14 @@
+import { migrateState } from './migrate'
 import type { AppState } from './types'
 
+/** Unchanged key: v1 (MVP) data stored here is migrated forward on load, not discarded. */
 export const STORAGE_KEY = 'lionco-crm-demo:v2'
 
 export function loadState(): AppState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const s = JSON.parse(raw) as AppState
-    if (
-      s?.version !== 1 ||
-      !Array.isArray(s.jobs) ||
-      !s.jobs.every((j) => j.serviceType) ||
-      !Array.isArray(s.expenses) ||
-      !Array.isArray(s.catalogue) ||
-      !Array.isArray(s.people) ||
-      typeof s.checklists !== 'object' ||
-      s.checklists === null
-    )
-      return null
-    return s
+    return migrateState(JSON.parse(raw))
   } catch {
     return null
   }

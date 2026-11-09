@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { checklistBalance, checklistProgress } from './checklist'
 import { buildSeed } from './seed'
+import { ALL_STAGES } from './types'
 import {
   addExpense,
   addJob,
@@ -20,7 +21,8 @@ const AT = NOW.toISOString()
 describe('app state transitions', () => {
   it('seed covers all stages and has loss + thin jobs and a flagged checklist', () => {
     const s = buildSeed(NOW)
-    expect(new Set(s.jobs.map((j) => j.stage)).size).toBe(7)
+    // every lifecycle stage (12 main-path stages + Declined) is represented in the seed
+    expect(new Set(s.jobs.map((j) => j.stage)).size).toBe(ALL_STAGES.length)
     const margins = s.jobs.map((j) => jobFinancials(s, j))
     expect(margins.some((f) => f.profit < 0)).toBe(true)
     expect(margins.some((f) => f.cogs > 0 && f.marginPct >= 0 && f.marginPct < 20)).toBe(true)
@@ -84,11 +86,12 @@ describe('app state transitions', () => {
   it('new jobs get sequential fixed codes', () => {
     let s = buildSeed(NOW)
     const base = { client: 'A', clientType: 'Builder' as const, serviceType: 'Residential' as const, droneSurvey: false, contactName: '', contactPhone: '', contactEmail: '', siteAddress: '1 X St', suburb: 'Y', quote: 1000 }
+    const n = s.jobs.length
     const a = addJob(s, base, NOW)
     s = a.state
     const b = addJob(s, base, NOW)
-    expect(a.job.code).toBe('LC-2026-016')
-    expect(b.job.code).toBe('LC-2026-017')
+    expect(a.job.code).toBe(`LC-2026-0${n + 1}`)
+    expect(b.job.code).toBe(`LC-2026-0${n + 2}`)
     expect(a.job.stage).toBe('Enquiry')
   })
 })

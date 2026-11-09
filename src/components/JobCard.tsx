@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { money } from '../lib/format'
-import { isCosted, jobFinancials, stageIndex } from '../lib/state'
-import { STAGES, type Job } from '../lib/types'
+import { jobFinancials } from '../lib/state'
+import { isCosted, neighbourStage } from '../lib/stages'
+import { type Job } from '../lib/types'
 import { useStore } from '../store/StoreProvider'
 import { MarginBadge, ServiceBadge, stageColor } from './ui'
 
@@ -19,7 +20,8 @@ export default function JobCard({
   const { state, stepJob } = useStore()
   const nav = useNavigate()
   const f = jobFinancials(state, job)
-  const idx = stageIndex(job.stage)
+  const back = neighbourStage(job.stage, -1)
+  const fwd = neighbourStage(job.stage, 1)
   const hasChecklist = !!state.checklists[job.id]
   return (
     <div
@@ -55,20 +57,20 @@ export default function JobCard({
       <div className="mt-1">{isCosted(job.stage) ? <MarginBadge f={f} /> : <span className="text-[11px] text-slate-400">Not costed yet</span>}</div>
       <div className="mt-1.5 flex items-center justify-between border-t border-slate-100 pt-1.5" onClick={(e) => e.stopPropagation()}>
         <button
-          disabled={idx === 0}
+          disabled={!back}
           onClick={() => stepJob(job.id, -1)}
-          aria-label={`Move ${job.code} back to ${STAGES[idx - 1] ?? ''}`}
-          title={idx > 0 ? `Back to ${STAGES[idx - 1]}` : ''}
-          className="rounded px-2.5 py-0.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink disabled:invisible"
+          aria-label={`Move ${job.code} back to ${back ?? ''}`}
+          title={back ? `Back to ${back}` : ''}
+          className="min-h-[32px] min-w-[40px] rounded px-2.5 py-0.5 text-xs font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink disabled:invisible"
         >
           ◀
         </button>
         <button
-          disabled={idx === STAGES.length - 1}
+          disabled={!fwd}
           onClick={() => stepJob(job.id, 1)}
-          aria-label={`Move ${job.code} forward to ${STAGES[idx + 1] ?? ''}`}
-          title={idx < STAGES.length - 1 ? `Forward to ${STAGES[idx + 1]}` : ''}
-          className="rounded bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-brand-600 hover:text-white disabled:invisible"
+          aria-label={`Move ${job.code} forward to ${fwd ?? ''}`}
+          title={fwd ? (job.stage === 'Declined' ? `Re-open to ${fwd}` : `Forward to ${fwd}`) : ''}
+          className="min-h-[32px] min-w-[40px] rounded bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-brand-600 hover:text-white disabled:invisible"
         >
           ▶
         </button>
